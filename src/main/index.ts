@@ -1,11 +1,6 @@
 import { app } from "electron";
 import { App } from "./app";
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling
-if (require("electron-squirrel-startup")) {
-  app.quit();
-}
-
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 

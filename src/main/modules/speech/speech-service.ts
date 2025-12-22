@@ -18,8 +18,10 @@ export class SpeechService {
    * Start continuous speech recognition
    */
   async startRecognition(): Promise<void> {
+    console.log("[Speech] startRecognition called");
+
     if (this.isRecognizing) {
-      console.warn("Recognition already in progress");
+      console.warn("[Speech] Recognition already in progress");
       return;
     }
 
@@ -31,11 +33,14 @@ export class SpeechService {
     this.isRecognizing = true;
 
     // Get Entra ID token
+    console.log("[Speech] Acquiring authentication token...");
     const token = await this.authService.acquireToken();
+    console.log("[Speech] Token acquired successfully");
 
     // Build authorization token format for Speech SDK with Entra ID
     // Format: aad#{resourceId}#{accessToken}
     const authToken = `aad#${this.config.resourceId}#${token}`;
+    console.log(`[Speech] Using region: ${this.config.region}, language: ${this.config.language || "en-US"}`);
 
     const speechConfig = sdk.SpeechConfig.fromAuthorizationToken(
       authToken,
@@ -44,7 +49,9 @@ export class SpeechService {
     speechConfig.speechRecognitionLanguage = this.config.language || "en-US";
 
     // Use default microphone input
+    console.log("[Speech] Configuring microphone input...");
     const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
+    console.log("[Speech] Microphone configured");
 
     this.recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
 
@@ -104,21 +111,27 @@ export class SpeechService {
    * Stop continuous recognition and return accumulated transcript
    */
   async stopRecognition(): Promise<string> {
+    console.log("[Speech] stopRecognition called");
+    console.log(`[Speech] Accumulated segments: ${this.accumulatedText.length}`);
+
     if (!this.recognizer) {
+      console.log("[Speech] No recognizer instance - returning empty string");
       return "";
     }
 
     return new Promise<string>((resolve) => {
       this.recognizer!.stopContinuousRecognitionAsync(
         () => {
-          console.log("[Speech] Recognition stopped");
+          console.log("[Speech] Recognition stopped successfully");
           const fullText = this.accumulatedText.join(" ").trim();
+          console.log(`[Speech] Final transcript: "${fullText}"`);
           this.cleanup();
           resolve(fullText);
         },
         (error) => {
           console.error("[Speech] Error stopping recognition:", error);
           const fullText = this.accumulatedText.join(" ").trim();
+          console.log(`[Speech] Final transcript (with error): "${fullText}"`);
           this.cleanup();
           resolve(fullText);
         }

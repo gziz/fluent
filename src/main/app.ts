@@ -92,14 +92,18 @@ export class App {
    * Handle hotkey press - toggle recording
    */
   private async handleHotkeyPress(): Promise<void> {
+    console.log(`[App] Hotkey pressed! Current state: ${this.state}`);
+
     if (this.state === "processing") {
-      // Ignore hotkey while processing
+      console.log("[App] Ignoring hotkey - currently processing");
       return;
     }
 
     if (this.state === "idle") {
+      console.log("[App] Starting recording...");
       await this.startRecording();
     } else if (this.state === "recording") {
+      console.log("[App] Stopping recording...");
       await this.stopRecordingAndProcess();
     }
   }
@@ -109,23 +113,29 @@ export class App {
    */
   private async startRecording(): Promise<void> {
     // Check if authenticated
+    console.log("[App] Checking authentication status...");
     const isAuthenticated = await this.authService.isAuthenticated();
     if (!isAuthenticated) {
       console.log("[App] Not authenticated, prompting sign in");
       await this.handleSignIn();
       return;
     }
+    console.log("[App] Authentication OK");
 
     // Check if configured
     if (!this.configStore.isConfigured()) {
+      console.log("[App] App not configured, showing configuration prompt");
       this.showConfigurationPrompt();
       return;
     }
+    console.log("[App] Configuration OK");
 
     try {
       this.setState("recording");
+      console.log("[App] State changed to: recording");
+      console.log("[App] Starting speech recognition...");
       await this.speechService.startRecognition();
-      console.log("[App] Recording started");
+      console.log("[App] Speech recognition started - Listening for audio...");
     } catch (error) {
       console.error("[App] Failed to start recording:", error);
       this.setState("idle");
@@ -142,28 +152,33 @@ export class App {
   private async stopRecordingAndProcess(): Promise<void> {
     try {
       this.setState("processing");
+      console.log("[App] State changed to: processing");
 
       // Stop recognition and get transcript
+      console.log("[App] Stopping speech recognition...");
       const transcript = await this.speechService.stopRecognition();
-      console.log(`[App] Raw transcript: "${transcript}"`);
+      console.log(`[App] Raw transcript received: "${transcript}"`);
 
       if (!transcript.trim()) {
-        console.log("[App] No speech detected");
+        console.log("[App] No speech detected - returning to idle");
         this.setState("idle");
         return;
       }
 
       // Clean up transcript with OpenAI
+      console.log("[App] Sending transcript to OpenAI for cleanup...");
       const cleanedText = await this.openaiService.cleanupTranscript(transcript);
-      console.log(`[App] Cleaned text: "${cleanedText}"`);
+      console.log(`[App] Cleaned text received: "${cleanedText}"`);
 
       // Paste into active application
       if (cleanedText.trim()) {
+        console.log("[App] Pasting text into active application...");
         await this.pasteService.pasteText(cleanedText);
-        console.log("[App] Text pasted");
+        console.log("[App] Text pasted successfully!");
       }
 
       this.setState("idle");
+      console.log("[App] State changed to: idle - Ready for next recording");
     } catch (error) {
       console.error("[App] Failed to process recording:", error);
       this.setState("idle");

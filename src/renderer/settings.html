@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+  <title>My Whisper - Settings</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      font-size: 14px;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    h2 {
+      font-size: 14px;
+      margin: 20px 0 10px 0;
+      color: #569cd6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .section {
+      background: #252526;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field:last-child {
+      margin-bottom: 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      color: #9cdcfe;
+      font-size: 12px;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-size: 13px;
+    }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #569cd6;
+    }
+    input[type="text"]::placeholder {
+      color: #6a6a6a;
+    }
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checkbox-field input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+    }
+    .checkbox-field label {
+      margin-bottom: 0;
+      color: #d4d4d4;
+      font-size: 13px;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button.primary {
+      background: #0e639c;
+      color: #fff;
+    }
+    button.primary:hover {
+      background: #1177bb;
+    }
+    button.secondary {
+      background: #3c3c3c;
+      color: #d4d4d4;
+    }
+    button.secondary:hover {
+      background: #4c4c4c;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+    .status.success {
+      background: #2d4a2d;
+      color: #89d185;
+    }
+    .status.error {
+      background: #4a2d2d;
+      color: #d18585;
+    }
+    .status.info {
+      background: #2d3a4a;
+      color: #85b8d1;
+    }
+    .auth-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .auth-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .auth-dot.authenticated {
+      background: #89d185;
+    }
+    .auth-dot.unauthenticated {
+      background: #d18585;
+    }
+    .help-text {
+      font-size: 11px;
+      color: #6a6a6a;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Settings</h1>
+
+  <div id="message" class="status info" style="display: none;"></div>
+
+  <h2>Authentication</h2>
+  <div class="section">
+    <div class="auth-status">
+      <span id="auth-dot" class="auth-dot unauthenticated"></span>
+      <span id="auth-text">Not signed in</span>
+      <button id="auth-btn" class="secondary" style="margin-left: auto;">Sign In</button>
+    </div>
+  </div>
+
+  <h2>Azure App Registration</h2>
+  <div class="section">
+    <div class="field">
+      <label for="clientId">Client ID</label>
+      <input type="text" id="clientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+      <div class="help-text">From Azure Portal > App registrations > Your app > Application (client) ID</div>
+    </div>
+    <div class="field">
+      <label for="tenantId">Tenant ID</label>
+      <input type="text" id="tenantId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+      <div class="help-text">From Azure Portal > App registrations > Your app > Directory (tenant) ID</div>
+    </div>
+  </div>
+
+  <h2>Azure Speech Service</h2>
+  <div class="section">
+    <div class="field">
+      <label for="resourceId">Resource ID</label>
+      <input type="text" id="resourceId" placeholder="/subscriptions/.../resourceGroups/.../providers/Microsoft.CognitiveServices/accounts/...">
+      <div class="help-text">Full resource ID from Azure Portal > Your Speech resource > Properties > Resource ID</div>
+    </div>
+    <div class="field">
+      <label for="region">Region</label>
+      <input type="text" id="region" placeholder="eastus">
+      <div class="help-text">e.g., eastus, westus2, westeurope</div>
+    </div>
+    <div class="field">
+      <label for="language">Language</label>
+      <input type="text" id="language" placeholder="en-US">
+      <div class="help-text">Speech recognition language code</div>
+    </div>
+  </div>
+
+  <h2>Azure OpenAI</h2>
+  <div class="section">
+    <div class="field">
+      <label for="endpoint">Endpoint</label>
+      <input type="text" id="endpoint" placeholder="https://your-resource.openai.azure.com">
+      <div class="help-text">From Azure Portal > Your OpenAI resource > Keys and Endpoint</div>
+    </div>
+    <div class="field">
+      <label for="deploymentName">Deployment Name</label>
+      <input type="text" id="deploymentName" placeholder="gpt-4o-mini">
+      <div class="help-text">The name of your deployed model</div>
+    </div>
+  </div>
+
+  <h2>Hotkey</h2>
+  <div class="section">
+    <div class="field">
+      <label for="accelerator">Hotkey</label>
+      <input type="text" id="accelerator" placeholder="Ctrl+Shift+Space">
+      <div class="help-text">Electron accelerator format. Examples: Ctrl+Shift+Space, Alt+R, CommandOrControl+Shift+D</div>
+    </div>
+  </div>
+
+  <h2>Preferences</h2>
+  <div class="section">
+    <div class="field checkbox-field">
+      <input type="checkbox" id="restoreClipboard">
+      <label for="restoreClipboard">Restore clipboard after paste</label>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button id="save-btn" class="primary">Save</button>
+    <button id="close-btn" class="secondary">Close</button>
+  </div>
+
+  <script>
+    // Load current config
+    async function loadConfig() {
+      try {
+        const config = await window.api.config.getAll();
+
+        document.getElementById('clientId').value = config.auth.clientId || '';
+        document.getElementById('tenantId').value = config.auth.tenantId || '';
+        document.getElementById('resourceId').value = config.speech.resourceId || '';
+        document.getElementById('region').value = config.speech.region || 'eastus';
+        document.getElementById('language').value = config.speech.language || 'en-US';
+        document.getElementById('endpoint').value = config.openai.endpoint || '';
+        document.getElementById('deploymentName').value = config.openai.deploymentName || 'gpt-4o-mini';
+        document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
+        document.getElementById('restoreClipboard').checked = config.preferences.restoreClipboard !== false;
+
+        // Load auth status
+        updateAuthStatus();
+      } catch (error) {
+        showMessage('Failed to load config: ' + error.message, 'error');
+      }
+    }
+
+    // Update auth status display
+    async function updateAuthStatus() {
+      try {
+        const status = await window.api.auth.getStatus();
+        const dot = document.getElementById('auth-dot');
+        const text = document.getElementById('auth-text');
+        const btn = document.getElementById('auth-btn');
+
+        if (status.isAuthenticated) {
+          dot.className = 'auth-dot authenticated';
+          text.textContent = `Signed in as ${status.accountEmail || status.accountName || 'User'}`;
+          btn.textContent = 'Sign Out';
+        } else {
+          dot.className = 'auth-dot unauthenticated';
+          text.textContent = 'Not signed in';
+          btn.textContent = 'Sign In';
+        }
+      } catch (error) {
+        console.error('Failed to get auth status:', error);
+      }
+    }
+
+    // Save config
+    async function saveConfig() {
+      try {
+        await window.api.config.set('auth', {
+          clientId: document.getElementById('clientId').value.trim(),
+          tenantId: document.getElementById('tenantId').value.trim(),
+        });
+
+        await window.api.config.set('speech', {
+          resourceId: document.getElementById('resourceId').value.trim(),
+          region: document.getElementById('region').value.trim() || 'eastus',
+          language: document.getElementById('language').value.trim() || 'en-US',
+        });
+
+        await window.api.config.set('openai', {
+          endpoint: document.getElementById('endpoint').value.trim(),
+          deploymentName: document.getElementById('deploymentName').value.trim() || 'gpt-4o-mini',
+        });
+
+        await window.api.config.set('hotkey', {
+          accelerator: document.getElementById('accelerator').value.trim() || 'Ctrl+Shift+Space',
+        });
+
+        await window.api.config.set('preferences', {
+          playAudioFeedback: true,
+          restoreClipboard: document.getElementById('restoreClipboard').checked,
+        });
+
+        showMessage('Settings saved successfully!', 'success');
+      } catch (error) {
+        showMessage('Failed to save: ' + error.message, 'error');
+      }
+    }
+
+    // Handle auth button click
+    async function handleAuthClick() {
+      const btn = document.getElementById('auth-btn');
+      const status = await window.api.auth.getStatus();
+
+      btn.disabled = true;
+      try {
+        if (status.isAuthenticated) {
+          await window.api.auth.signOut();
+        } else {
+          showMessage('Opening browser for sign in...', 'info');
+          await window.api.auth.signIn();
+        }
+        await updateAuthStatus();
+        showMessage('', '');
+      } catch (error) {
+        showMessage('Auth error: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Show message
+    function showMessage(text, type) {
+      const el = document.getElementById('message');
+      if (!text) {
+        el.style.display = 'none';
+        return;
+      }
+      el.textContent = text;
+      el.className = 'status ' + type;
+      el.style.display = 'block';
+    }
+
+    // Close window
+    function closeWindow() {
+      window.close();
+    }
+
+    // Event listeners
+    document.getElementById('save-btn').addEventListener('click', saveConfig);
+    document.getElementById('close-btn').addEventListener('click', closeWindow);
+    document.getElementById('auth-btn').addEventListener('click', handleAuthClick);
+
+    // Load config on page load
+    loadConfig();
+  </script>
+</body>
+</html>

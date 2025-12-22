@@ -1,0 +1,29 @@
+appId: com.mywhisper.app
+productName: My Whisper
+copyright: Copyright 2024
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+  - assets/**/*
+  - "!**/*.ts"
+  - "!**/*.map"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icons/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+npmRebuild: true

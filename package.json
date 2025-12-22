@@ -1,0 +1,27 @@
+{
+  "name": "my-whisper",
+  "version": "1.0.0",
+  "description": "Voice-to-text dictation with Azure Speech and OpenAI",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "start": "npm run build && electron .",
+    "dev": "tsc && electron .",
+    "build": "tsc",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/identity": "^4.4.0",
+    "@azure/msal-node": "^2.13.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.38.0",
+    "openai": "^4.67.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.5.0"
+  }
+}

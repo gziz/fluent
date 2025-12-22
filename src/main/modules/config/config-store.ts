@@ -90,9 +90,9 @@ export class ConfigStore {
   }
 
   isConfigured(): boolean {
+    // For Azure CLI auth, we don't need clientId/tenantId
+    // Just check that the service endpoints are configured
     return !!(
-      this.config.auth.clientId &&
-      this.config.auth.tenantId &&
       this.config.speech.resourceId &&
       this.config.openai.endpoint
     );

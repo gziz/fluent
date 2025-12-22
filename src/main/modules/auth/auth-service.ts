@@ -1,158 +1,132 @@
-import {
-  PublicClientApplication,
-  Configuration,
-  AuthenticationResult,
-  AccountInfo,
-  InteractionRequiredAuthError,
-  LogLevel,
-} from "@azure/msal-node";
-import { shell } from "electron";
-import { TokenCache } from "./token-cache";
+import { AzureCliCredential } from "@azure/identity";
 import type { AuthConfig, AuthStatus } from "../../../shared/types";
 
 // Scopes for Azure Cognitive Services (covers both Speech and OpenAI)
 const COGNITIVE_SERVICES_SCOPE = "https://cognitiveservices.azure.com/.default";
 
+/**
+ * Authentication service using Azure CLI credentials.
+ * Requires user to run `az login` before using the app.
+ *
+ * NOTE: For production, this can be extended to use MSAL with App Registration
+ * for a proper browser-based sign-in flow. See the original implementation
+ * in git history or AZURE_SETUP.md for details.
+ */
 export class AuthService {
-  private msalClient: PublicClientApplication | null = null;
-  private tokenCache: TokenCache;
-  private account: AccountInfo | null = null;
+  private credential: AzureCliCredential | null = null;
+  private cachedAccountInfo: { name: string; email: string } | null = null;
   private config: AuthConfig;
 
   constructor(config: AuthConfig) {
     this.config = config;
-    this.tokenCache = new TokenCache();
-  }
-
-  private async getClient(): Promise<PublicClientApplication> {
-    if (!this.msalClient) {
-      if (!this.config.clientId || !this.config.tenantId) {
-        throw new Error("Auth not configured: clientId and tenantId are required");
-      }
-
-      const msalConfig: Configuration = {
-        auth: {
-          clientId: this.config.clientId,
-          authority: `https://login.microsoftonline.com/${this.config.tenantId}`,
-        },
-        cache: {
-          cachePlugin: this.tokenCache,
-        },
-        system: {
-          loggerOptions: {
-            loggerCallback: (level, message) => {
-              if (level === LogLevel.Error) {
-                console.error("[MSAL]", message);
-              }
-            },
-            logLevel: LogLevel.Error,
-          },
-        },
-      };
-
-      this.msalClient = new PublicClientApplication(msalConfig);
-
-      // Try to restore account from cache
-      const accounts = await this.msalClient.getTokenCache().getAllAccounts();
-      if (accounts.length > 0) {
-        this.account = accounts[0];
-      }
-    }
-    return this.msalClient;
   }
 
   /**
-   * Acquire token silently using cached credentials, or interactively if needed.
+   * Get or create the Azure CLI credential
+   */
+  private getCredential(): AzureCliCredential {
+    if (!this.credential) {
+      this.credential = new AzureCliCredential();
+    }
+    return this.credential;
+  }
+
+  /**
+   * Acquire token using Azure CLI credentials
    */
   async acquireToken(): Promise<string> {
-    const client = await this.getClient();
+    console.log("[Auth] Acquiring token via Azure CLI...");
 
-    // Try silent acquisition first
-    if (this.account) {
-      try {
-        const result = await client.acquireTokenSilent({
-          account: this.account,
-          scopes: [COGNITIVE_SERVICES_SCOPE],
-        });
-        return result.accessToken;
-      } catch (error) {
-        if (!(error instanceof InteractionRequiredAuthError)) {
-          console.error("Silent token acquisition failed:", error);
-        }
-        // Fall through to interactive
+    try {
+      const credential = this.getCredential();
+      const token = await credential.getToken(COGNITIVE_SERVICES_SCOPE);
+
+      if (!token) {
+        throw new Error("Failed to acquire token from Azure CLI");
       }
-    }
 
-    // Interactive acquisition required
-    return this.acquireTokenInteractive();
+      console.log("[Auth] Token acquired successfully");
+      return token.token;
+    } catch (error) {
+      console.error("[Auth] Failed to acquire token:", error);
+      throw new Error(
+        "Failed to get Azure CLI token. Make sure you've run 'az login' first.\n\n" +
+        `Details: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   /**
-   * Acquire token interactively using device code flow.
-   * Opens browser for user to authenticate.
+   * "Sign in" - for Azure CLI, this just verifies the credentials work
    */
-  private async acquireTokenInteractive(): Promise<string> {
-    const client = await this.getClient();
+  async signIn(): Promise<void> {
+    console.log("[Auth] Verifying Azure CLI credentials...");
 
-    const result = await client.acquireTokenByDeviceCode({
-      scopes: [COGNITIVE_SERVICES_SCOPE],
-      deviceCodeCallback: (response) => {
-        console.log(response.message);
-        // Open the verification URL in the default browser
-        shell.openExternal(response.verificationUri);
-      },
-    });
+    try {
+      // Try to get a token to verify credentials are valid
+      await this.acquireToken();
 
-    if (!result) {
-      throw new Error("Authentication failed: no result received");
+      // Try to get account info from az cli
+      await this.refreshAccountInfo();
+
+      console.log("[Auth] Azure CLI credentials verified");
+    } catch (error) {
+      throw new Error(
+        "Could not verify Azure CLI credentials.\n\n" +
+        "Please run 'az login' in your terminal first, then try again."
+      );
     }
-
-    this.account = result.account;
-    return result.accessToken;
   }
 
   /**
-   * Sign in interactively
+   * Refresh account info from Azure CLI
    */
-  async signIn(): Promise<AuthenticationResult> {
-    const client = await this.getClient();
+  private async refreshAccountInfo(): Promise<void> {
+    try {
+      // Use child_process to get account info from az cli
+      const { exec } = await import("child_process");
+      const { promisify } = await import("util");
+      const execAsync = promisify(exec);
 
-    const result = await client.acquireTokenByDeviceCode({
-      scopes: [COGNITIVE_SERVICES_SCOPE],
-      deviceCodeCallback: (response) => {
-        console.log(response.message);
-        shell.openExternal(response.verificationUri);
-      },
-    });
-
-    if (!result) {
-      throw new Error("Authentication failed: no result received");
+      const { stdout } = await execAsync("az account show --query \"{name:user.name, email:user.name}\" -o json");
+      const info = JSON.parse(stdout);
+      this.cachedAccountInfo = {
+        name: info.name || "Azure CLI User",
+        email: info.email || ""
+      };
+    } catch {
+      // If we can't get account info, just use defaults
+      this.cachedAccountInfo = {
+        name: "Azure CLI User",
+        email: ""
+      };
     }
-
-    this.account = result.account;
-    return result;
   }
 
   /**
-   * Sign out and clear cached tokens
+   * "Sign out" - for Azure CLI, this just clears the cached credential
+   * User would need to run `az logout` to fully sign out
    */
   async signOut(): Promise<void> {
-    if (this.msalClient && this.account) {
-      const cache = this.msalClient.getTokenCache();
-      await cache.removeAccount(this.account);
-    }
-    this.tokenCache.clear();
-    this.account = null;
-    this.msalClient = null;
+    console.log("[Auth] Clearing cached credentials");
+    this.credential = null;
+    this.cachedAccountInfo = null;
   }
 
   /**
-   * Check if user is authenticated (has cached account)
+   * Check if Azure CLI credentials are available
    */
   async isAuthenticated(): Promise<boolean> {
     try {
-      await this.getClient();
-      return this.account !== null;
+      const credential = this.getCredential();
+      // Try to get a token - if it works, we're authenticated
+      const token = await credential.getToken(COGNITIVE_SERVICES_SCOPE);
+
+      if (token && !this.cachedAccountInfo) {
+        await this.refreshAccountInfo();
+      }
+
+      return !!token;
     } catch {
       return false;
     }
@@ -165,16 +139,17 @@ export class AuthService {
     const isAuthenticated = await this.isAuthenticated();
     return {
       isAuthenticated,
-      accountName: this.account?.name,
-      accountEmail: this.account?.username,
+      accountName: this.cachedAccountInfo?.name || "Azure CLI User",
+      accountEmail: this.cachedAccountInfo?.email,
     };
   }
 
   /**
-   * Update auth configuration
+   * Update auth configuration (not used for Azure CLI auth, but kept for interface compatibility)
    */
   updateConfig(config: AuthConfig): void {
     this.config = config;
-    this.msalClient = null; // Force re-initialization
+    // Reset credential to pick up any config changes
+    this.credential = null;
   }
 }

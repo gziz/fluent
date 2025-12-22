@@ -150,26 +150,15 @@
 
   <div id="message" class="status info" style="display: none;"></div>
 
-  <h2>Authentication</h2>
+  <h2>Authentication (Azure CLI)</h2>
   <div class="section">
     <div class="auth-status">
       <span id="auth-dot" class="auth-dot unauthenticated"></span>
       <span id="auth-text">Not signed in</span>
-      <button id="auth-btn" class="secondary" style="margin-left: auto;">Sign In</button>
+      <button id="auth-btn" class="secondary" style="margin-left: auto;">Verify</button>
     </div>
-  </div>
-
-  <h2>Azure App Registration</h2>
-  <div class="section">
-    <div class="field">
-      <label for="clientId">Client ID</label>
-      <input type="text" id="clientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-      <div class="help-text">From Azure Portal > App registrations > Your app > Application (client) ID</div>
-    </div>
-    <div class="field">
-      <label for="tenantId">Tenant ID</label>
-      <input type="text" id="tenantId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-      <div class="help-text">From Azure Portal > App registrations > Your app > Directory (tenant) ID</div>
+    <div class="help-text" style="margin-top: 10px;">
+      Run <code style="background:#1e1e1e;padding:2px 6px;border-radius:3px;">az login</code> in your terminal before using the app.
     </div>
   </div>
 
@@ -234,8 +223,7 @@
       try {
         const config = await window.api.config.getAll();
 
-        document.getElementById('clientId').value = config.auth.clientId || '';
-        document.getElementById('tenantId').value = config.auth.tenantId || '';
+        // clientId and tenantId not needed for Azure CLI auth
         document.getElementById('resourceId').value = config.speech.resourceId || '';
         document.getElementById('region').value = config.speech.region || 'eastus';
         document.getElementById('language').value = config.speech.language || 'en-US';
@@ -276,9 +264,10 @@
     // Save config
     async function saveConfig() {
       try {
+        // Auth config not needed for Azure CLI auth (kept for future App Registration support)
         await window.api.config.set('auth', {
-          clientId: document.getElementById('clientId').value.trim(),
-          tenantId: document.getElementById('tenantId').value.trim(),
+          clientId: '',
+          tenantId: '',
         });
 
         await window.api.config.set('speech', {
@@ -316,14 +305,15 @@
       try {
         if (status.isAuthenticated) {
           await window.api.auth.signOut();
+          showMessage('Credentials cleared. Run "az login" to sign in again.', 'info');
         } else {
-          showMessage('Opening browser for sign in...', 'info');
+          showMessage('Verifying Azure CLI credentials...', 'info');
           await window.api.auth.signIn();
+          showMessage('Azure CLI credentials verified!', 'success');
         }
         await updateAuthStatus();
-        showMessage('', '');
       } catch (error) {
-        showMessage('Auth error: ' + error.message, 'error');
+        showMessage('Auth error: ' + error.message + '\n\nMake sure you have run "az login" first.', 'error');
       } finally {
         btn.disabled = false;
       }

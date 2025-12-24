@@ -198,6 +198,17 @@ export class App {
         `Could not register hotkey: ${accelerator}\n\nIt may be in use by another application.`
       );
     }
+
+    // Register ESC key to cancel recording
+    const escSuccess = globalShortcut.register("Escape", () => {
+      this.handleEscapeKeyPress();
+    });
+
+    if (escSuccess) {
+      console.log("[App] ESC key registered for canceling recording");
+    } else {
+      console.log("[App] Failed to register ESC key (may be in use, non-critical)");
+    }
   }
 
   /**
@@ -217,6 +228,19 @@ export class App {
     } else if (this.state === "recording") {
       console.log("[App] Stopping recording...");
       await this.stopRecordingAndProcess();
+    }
+  }
+
+  /**
+   * Handle ESC key press - cancel recording
+   */
+  private handleEscapeKeyPress(): void {
+    console.log(`[App] ESC key pressed! Current state: ${this.state}`);
+
+    if (this.state === "recording") {
+      this.cancelRecording();
+    } else {
+      console.log("[App] ESC key ignored - not recording");
     }
   }
 
@@ -339,6 +363,34 @@ export class App {
         `Could not process recording: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+  }
+
+  /**
+   * Cancel recording without processing
+   */
+  private cancelRecording(): void {
+    if (this.state !== "recording") {
+      console.log("[App] ESC pressed but not recording - ignoring");
+      return;
+    }
+
+    console.log("[App] Canceling recording...");
+
+    // Stop the speech recognition
+    if (this.recorderWindow) {
+      this.recorderWindow.webContents.send(IPC_CHANNELS.SPEECH_STOP);
+    }
+
+    // Clear any pending recognition handlers
+    if (this.pendingRecognitionResolve) {
+      this.pendingRecognitionResolve = null;
+      this.pendingRecognitionReject = null;
+    }
+
+    // Reset to idle state
+    this.setState("idle");
+    this.hideOverlay();
+    console.log("[App] Recording canceled - returned to idle");
   }
 
   /**

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; worker-src 'self' blob: data:; connect-src https://*.microsoft.com https://*.azure.com wss://*.microsoft.com wss://*.stt.speech.microsoft.com">
+  <title>Recorder</title>
+</head>
+<body>
+  <p>Speech Recognition Window</p>
+  <p>This window handles microphone input for speech-to-text.</p>
+  <script>
+    // All speech recognition is handled in the preload script
+    // This page just needs to exist for the preload to run
+    console.log('[Recorder] Window loaded, preload handles speech recognition');
+    window.api.speech.sendReady();
+  </script>
+</body>
+</html>

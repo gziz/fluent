@@ -1,7 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
-import { app } from "electron";
+import { app, safeStorage } from "electron";
 import type { AppConfig } from "../../../shared/types";
+
+// Prefix for encrypted values
+const ENCRYPTED_PREFIX = "enc:";
 
 const DEFAULT_CONFIG: AppConfig = {
   auth: {
@@ -9,13 +12,14 @@ const DEFAULT_CONFIG: AppConfig = {
     tenantId: "",
   },
   speech: {
-    resourceId: "",
+    subscriptionKey: "",
     region: "eastus",
     language: "en-US",
   },
   openai: {
     endpoint: "",
     deploymentName: "gpt-4o-mini",
+    apiKey: "",
   },
   hotkey: {
     accelerator: "Ctrl+Shift+Space",
@@ -23,16 +27,100 @@ const DEFAULT_CONFIG: AppConfig = {
   preferences: {
     playAudioFeedback: true,
     restoreClipboard: true,
+    startAtLogin: false,
   },
 };
+
+// Fields that should be encrypted
+const SENSITIVE_FIELDS = [
+  "speech.subscriptionKey",
+  "openai.apiKey",
+] as const;
 
 export class ConfigStore {
   private configPath: string;
   private config: AppConfig;
+  private encryptionAvailable: boolean;
 
   constructor() {
     this.configPath = path.join(app.getPath("userData"), "config.json");
+    this.encryptionAvailable = safeStorage.isEncryptionAvailable();
+
+    if (!this.encryptionAvailable) {
+      console.warn("[Config] Encryption not available - API keys will be stored in plain text");
+    }
+
     this.config = this.load();
+  }
+
+  /**
+   * Encrypt a string value if encryption is available
+   */
+  private encrypt(value: string): string {
+    if (!value || !this.encryptionAvailable) {
+      return value;
+    }
+    try {
+      const encrypted = safeStorage.encryptString(value);
+      return ENCRYPTED_PREFIX + encrypted.toString("base64");
+    } catch (error) {
+      console.error("[Config] Failed to encrypt value:", error);
+      return value;
+    }
+  }
+
+  /**
+   * Decrypt a string value if it's encrypted
+   */
+  private decrypt(value: string): string {
+    if (!value || !value.startsWith(ENCRYPTED_PREFIX)) {
+      return value;
+    }
+    if (!this.encryptionAvailable) {
+      console.warn("[Config] Cannot decrypt - encryption not available");
+      return "";
+    }
+    try {
+      const encrypted = Buffer.from(value.slice(ENCRYPTED_PREFIX.length), "base64");
+      return safeStorage.decryptString(encrypted);
+    } catch (error) {
+      console.error("[Config] Failed to decrypt value:", error);
+      return "";
+    }
+  }
+
+  /**
+   * Decrypt sensitive fields in config
+   */
+  private decryptConfig(config: AppConfig): AppConfig {
+    return {
+      ...config,
+      speech: {
+        ...config.speech,
+        subscriptionKey: this.decrypt(config.speech.subscriptionKey),
+      },
+      openai: {
+        ...config.openai,
+        apiKey: this.decrypt(config.openai.apiKey),
+      },
+    };
+  }
+
+  /**
+   * Encrypt sensitive fields for saving
+   */
+  private encryptConfig(config: AppConfig): AppConfig {
+    return {
+      ...config,
+      speech: {
+        ...config.speech,
+        subscriptionKey: this.encrypt(config.speech.subscriptionKey),
+      },
+      openai: {
+        ...config.openai,
+        apiKey: this.encrypt(config.openai.apiKey),
+      },
+    };
   }
 
   private load(): AppConfig {
@@ -41,10 +129,12 @@ export class ConfigStore {
         const data = fs.readFileSync(this.configPath, "utf-8");
         const parsed = JSON.parse(data) as Partial<AppConfig>;
         // Merge with defaults to ensure all fields exist
-        return this.mergeWithDefaults(parsed);
+        const merged = this.mergeWithDefaults(parsed);
+        // Decrypt sensitive fields
+        return this.decryptConfig(merged);
       }
     } catch (error) {
-      console.error("Failed to load config:", error);
+      console.error("[Config] Failed to load config:", error);
     }
     return { ...DEFAULT_CONFIG };
   }
@@ -65,9 +155,11 @@ export class ConfigStore {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2));
+      // Encrypt sensitive fields before saving
+      const encryptedConfig = this.encryptConfig(this.config);
+      fs.writeFileSync(this.configPath, JSON.stringify(encryptedConfig, null, 2));
     } catch (error) {
-      console.error("Failed to save config:", error);
+      console.error("[Config] Failed to save config:", error);
     }
   }
 
@@ -90,11 +182,19 @@ export class ConfigStore {
   }
 
   isConfigured(): boolean {
-    // For Azure CLI auth, we don't need clientId/tenantId
-    // Just check that the service endpoints are configured
+    // Check that API keys and endpoints are configured
     return !!(
-      this.config.speech.resourceId &&
-      this.config.openai.endpoint
+      this.config.speech.subscriptionKey &&
+      this.config.speech.region &&
+      this.config.openai.endpoint &&
+      this.config.openai.apiKey
     );
+  }
+
+  /**
+   * Check if encryption is available on this system
+   */
+  isEncryptionAvailable(): boolean {
+    return this.encryptionAvailable;
   }
 }

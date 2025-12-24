@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+  <title>My Whisper</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      background: transparent;
+      overflow: hidden;
+      -webkit-app-region: drag;
+    }
+    .bubble {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 30px;
+      background: rgba(30, 30, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+    }
+    .indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .indicator.recording {
+      background: #ef4444;
+      animation: pulse 1s ease-in-out infinite;
+    }
+    .indicator.processing {
+      background: #f59e0b;
+      animation: spin 1s linear infinite;
+    }
+    .indicator.done {
+      background: #22c55e;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .text {
+      white-space: nowrap;
+    }
+    .partial {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #a1a1aa;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bubble">
+    <div id="indicator" class="indicator recording"></div>
+    <span id="text" class="text">Listening...</span>
+  </div>
+  <div id="partial" class="partial" style="display: none;"></div>
+
+  <script>
+    const indicator = document.getElementById('indicator');
+    const text = document.getElementById('text');
+    const partial = document.getElementById('partial');
+
+    window.api.overlay.onStateChange((state, partialText) => {
+      indicator.className = 'indicator ' + state;
+      
+      switch (state) {
+        case 'recording':
+          text.textContent = 'Listening...';
+          break;
+        case 'processing':
+          text.textContent = 'Processing...';
+          break;
+        case 'done':
+          text.textContent = 'Ready to paste!';
+          // Auto-hide after 2 seconds
+          setTimeout(() => {
+            window.api.overlay.hide();
+          }, 2000);
+          break;
+      }
+
+      if (partialText) {
+        partial.textContent = partialText;
+        partial.style.display = 'block';
+      } else {
+        partial.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

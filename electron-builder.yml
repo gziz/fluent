@@ -9,15 +9,18 @@ directories:
 files:
   - dist/**/*
   - assets/**/*
+  - src/renderer/**/*.html
   - "!**/*.ts"
   - "!**/*.map"
 
 win:
   target:
-    - target: nsis
+    - target: dir
       arch:
         - x64
   icon: assets/icons/icon.ico
+  signDlls: false
+  sign: null
 
 nsis:
   oneClick: false

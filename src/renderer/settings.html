@@ -48,7 +48,7 @@
       color: #9cdcfe;
       font-size: 12px;
     }
-    input[type="text"], select {
+    input[type="text"], input[type="password"], select {
       width: 100%;
       padding: 8px 10px;
       border: 1px solid #3c3c3c;
@@ -57,11 +57,11 @@
       color: #d4d4d4;
       font-size: 13px;
     }
-    input[type="text"]:focus, select:focus {
+    input[type="text"]:focus, input[type="password"]:focus, select:focus {
       outline: none;
       border-color: #569cd6;
     }
-    input[type="text"]::placeholder {
+    input[type="text"]::placeholder, input[type="password"]::placeholder {
       color: #6a6a6a;
     }
     .checkbox-field {
@@ -150,24 +150,23 @@
 
   <div id="message" class="status info" style="display: none;"></div>
 
-  <h2>Authentication (Azure CLI)</h2>
+  <h2>Configuration Status</h2>
   <div class="section">
     <div class="auth-status">
       <span id="auth-dot" class="auth-dot unauthenticated"></span>
-      <span id="auth-text">Not signed in</span>
-      <button id="auth-btn" class="secondary" style="margin-left: auto;">Verify</button>
+      <span id="auth-text">Not configured</span>
     </div>
     <div class="help-text" style="margin-top: 10px;">
-      Run <code style="background:#1e1e1e;padding:2px 6px;border-radius:3px;">az login</code> in your terminal before using the app.
+      Enter your Azure API keys below to enable the app.
     </div>
   </div>
 
   <h2>Azure Speech Service</h2>
   <div class="section">
     <div class="field">
-      <label for="resourceId">Resource ID</label>
-      <input type="text" id="resourceId" placeholder="/subscriptions/.../resourceGroups/.../providers/Microsoft.CognitiveServices/accounts/...">
-      <div class="help-text">Full resource ID from Azure Portal > Your Speech resource > Properties > Resource ID</div>
+      <label for="speechKey">API Key</label>
+      <input type="password" id="speechKey" placeholder="Enter your Speech service key">
+      <div class="help-text">From Azure Portal > Speech resource > Keys and Endpoint > Key 1 or Key 2</div>
     </div>
     <div class="field">
       <label for="region">Region</label>
@@ -184,9 +183,14 @@
   <h2>Azure OpenAI</h2>
   <div class="section">
     <div class="field">
+      <label for="openaiKey">API Key</label>
+      <input type="password" id="openaiKey" placeholder="Enter your OpenAI service key">
+      <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint > Key 1 or Key 2</div>
+    </div>
+    <div class="field">
       <label for="endpoint">Endpoint</label>
       <input type="text" id="endpoint" placeholder="https://your-resource.openai.azure.com">
-      <div class="help-text">From Azure Portal > Your OpenAI resource > Keys and Endpoint</div>
+      <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint</div>
     </div>
     <div class="field">
       <label for="deploymentName">Deployment Name</label>
@@ -210,6 +214,10 @@
       <input type="checkbox" id="restoreClipboard">
       <label for="restoreClipboard">Restore clipboard after paste</label>
     </div>
+    <div class="field checkbox-field">
+      <input type="checkbox" id="startAtLogin">
+      <label for="startAtLogin">Start at login</label>
+    </div>
   </div>
 
   <div class="buttons">
@@ -223,60 +231,71 @@
       try {
         const config = await window.api.config.getAll();
 
-        // clientId and tenantId not needed for Azure CLI auth
-        document.getElementById('resourceId').value = config.speech.resourceId || '';
+        // Speech config
+        document.getElementById('speechKey').value = config.speech.subscriptionKey || '';
         document.getElementById('region').value = config.speech.region || 'eastus';
         document.getElementById('language').value = config.speech.language || 'en-US';
+
+        // OpenAI config
+        document.getElementById('openaiKey').value = config.openai.apiKey || '';
         document.getElementById('endpoint').value = config.openai.endpoint || '';
         document.getElementById('deploymentName').value = config.openai.deploymentName || 'gpt-4o-mini';
+
+        // Other settings
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
         document.getElementById('restoreClipboard').checked = config.preferences.restoreClipboard !== false;
+        document.getElementById('startAtLogin').checked = config.preferences.startAtLogin === true;
 
-        // Load auth status
-        updateAuthStatus();
+        // Update configuration status
+        updateConfigStatus();
       } catch (error) {
         showMessage('Failed to load config: ' + error.message, 'error');
       }
     }
 
-    // Update auth status display
-    async function updateAuthStatus() {
-      try {
-        const status = await window.api.auth.getStatus();
-        const dot = document.getElementById('auth-dot');
-        const text = document.getElementById('auth-text');
-        const btn = document.getElementById('auth-btn');
+    // Update configuration status display
+    function updateConfigStatus() {
+      const dot = document.getElementById('auth-dot');
+      const text = document.getElementById('auth-text');
 
-        if (status.isAuthenticated) {
-          dot.className = 'auth-dot authenticated';
-          text.textContent = `Signed in as ${status.accountEmail || status.accountName || 'User'}`;
-          btn.textContent = 'Sign Out';
-        } else {
-          dot.className = 'auth-dot unauthenticated';
-          text.textContent = 'Not signed in';
-          btn.textContent = 'Sign In';
-        }
-      } catch (error) {
-        console.error('Failed to get auth status:', error);
+      const speechKey = document.getElementById('speechKey').value.trim();
+      const region = document.getElementById('region').value.trim();
+      const openaiKey = document.getElementById('openaiKey').value.trim();
+      const endpoint = document.getElementById('endpoint').value.trim();
+
+      const isConfigured = speechKey && region && openaiKey && endpoint;
+
+      if (isConfigured) {
+        dot.className = 'auth-dot authenticated';
+        text.textContent = 'API keys configured';
+      } else {
+        dot.className = 'auth-dot unauthenticated';
+        const missing = [];
+        if (!speechKey) missing.push('Speech API key');
+        if (!region) missing.push('Region');
+        if (!openaiKey) missing.push('OpenAI API key');
+        if (!endpoint) missing.push('Endpoint');
+        text.textContent = 'Missing: ' + missing.join(', ');
       }
     }
 
     // Save config
     async function saveConfig() {
       try {
-        // Auth config not needed for Azure CLI auth (kept for future App Registration support)
+        // Auth config kept for future browser-based auth
         await window.api.config.set('auth', {
           clientId: '',
           tenantId: '',
         });
 
         await window.api.config.set('speech', {
-          resourceId: document.getElementById('resourceId').value.trim(),
+          subscriptionKey: document.getElementById('speechKey').value.trim(),
           region: document.getElementById('region').value.trim() || 'eastus',
           language: document.getElementById('language').value.trim() || 'en-US',
         });
 
         await window.api.config.set('openai', {
+          apiKey: document.getElementById('openaiKey').value.trim(),
           endpoint: document.getElementById('endpoint').value.trim(),
           deploymentName: document.getElementById('deploymentName').value.trim() || 'gpt-4o-mini',
         });
@@ -288,34 +307,23 @@
         await window.api.config.set('preferences', {
           playAudioFeedback: true,
           restoreClipboard: document.getElementById('restoreClipboard').checked,
+          startAtLogin: document.getElementById('startAtLogin').checked,
         });
 
+        updateConfigStatus();
         showMessage('Settings saved successfully!', 'success');
+
+        // Visual feedback on button
+        const btn = document.getElementById('save-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Saved!';
+        btn.style.background = '#2d4a2d';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '';
+        }, 1500);
       } catch (error) {
         showMessage('Failed to save: ' + error.message, 'error');
-      }
-    }
-
-    // Handle auth button click
-    async function handleAuthClick() {
-      const btn = document.getElementById('auth-btn');
-      const status = await window.api.auth.getStatus();
-
-      btn.disabled = true;
-      try {
-        if (status.isAuthenticated) {
-          await window.api.auth.signOut();
-          showMessage('Credentials cleared. Run "az login" to sign in again.', 'info');
-        } else {
-          showMessage('Verifying Azure CLI credentials...', 'info');
-          await window.api.auth.signIn();
-          showMessage('Azure CLI credentials verified!', 'success');
-        }
-        await updateAuthStatus();
-      } catch (error) {
-        showMessage('Auth error: ' + error.message + '\n\nMake sure you have run "az login" first.', 'error');
-      } finally {
-        btn.disabled = false;
       }
     }
 
@@ -329,6 +337,16 @@
       el.textContent = text;
       el.className = 'status ' + type;
       el.style.display = 'block';
+
+      // Scroll to top so message is visible
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Auto-hide success messages after 3 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          el.style.display = 'none';
+        }, 3000);
+      }
     }
 
     // Close window
@@ -339,7 +357,11 @@
     // Event listeners
     document.getElementById('save-btn').addEventListener('click', saveConfig);
     document.getElementById('close-btn').addEventListener('click', closeWindow);
-    document.getElementById('auth-btn').addEventListener('click', handleAuthClick);
+
+    // Update status when fields change
+    ['speechKey', 'region', 'openaiKey', 'endpoint'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateConfigStatus);
+    });
 
     // Load config on page load
     loadConfig();

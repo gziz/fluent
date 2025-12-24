@@ -1,16 +1,20 @@
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
-import { AuthService } from "../auth/auth-service";
 import type { SpeechConfig as AppSpeechConfig } from "../../../shared/types";
 
+/**
+ * Speech recognition service using Azure Speech SDK with API key authentication.
+ *
+ * NOTE: This service is currently not used - speech recognition is handled directly
+ * in preload.ts because the Speech SDK needs to run in a renderer process context
+ * for Web Audio API access. This file is kept for reference/future use.
+ */
 export class SpeechService {
-  private authService: AuthService;
   private config: AppSpeechConfig;
   private recognizer: sdk.SpeechRecognizer | null = null;
   private accumulatedText: string[] = [];
   private isRecognizing = false;
 
-  constructor(authService: AuthService, config: AppSpeechConfig) {
-    this.authService = authService;
+  constructor(config: AppSpeechConfig) {
     this.config = config;
   }
 
@@ -25,25 +29,18 @@ export class SpeechService {
       return;
     }
 
-    if (!this.config.resourceId || !this.config.region) {
-      throw new Error("Speech service not configured: resourceId and region are required");
+    if (!this.config.subscriptionKey || !this.config.region) {
+      throw new Error("Speech service not configured: subscriptionKey and region are required");
     }
 
     this.accumulatedText = [];
     this.isRecognizing = true;
 
-    // Get Entra ID token
-    console.log("[Speech] Acquiring authentication token...");
-    const token = await this.authService.acquireToken();
-    console.log("[Speech] Token acquired successfully");
-
-    // Build authorization token format for Speech SDK with Entra ID
-    // Format: aad#{resourceId}#{accessToken}
-    const authToken = `aad#${this.config.resourceId}#${token}`;
     console.log(`[Speech] Using region: ${this.config.region}, language: ${this.config.language || "en-US"}`);
 
-    const speechConfig = sdk.SpeechConfig.fromAuthorizationToken(
-      authToken,
+    // Use subscription key authentication
+    const speechConfig = sdk.SpeechConfig.fromSubscription(
+      this.config.subscriptionKey,
       this.config.region
     );
     speechConfig.speechRecognitionLanguage = this.config.language || "en-US";

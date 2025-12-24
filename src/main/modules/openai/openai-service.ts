@@ -1,5 +1,3 @@
-import { AzureOpenAI } from "openai";
-import { AuthService } from "../auth/auth-service";
 import type { OpenAIConfig } from "../../../shared/types";
 
 const CLEANUP_SYSTEM_PROMPT = `You are a dictation cleanup assistant. Clean up the following spoken transcript by:
@@ -14,39 +12,10 @@ const CLEANUP_SYSTEM_PROMPT = `You are a dictation cleanup assistant. Clean up t
 Return ONLY the cleaned text, nothing else.`;
 
 export class OpenAIService {
-  private authService: AuthService;
   private config: OpenAIConfig;
-  private client: AzureOpenAI | null = null;
-  private currentToken: string | null = null;
 
-  constructor(authService: AuthService, config: OpenAIConfig) {
-    this.authService = authService;
+  constructor(config: OpenAIConfig) {
     this.config = config;
-  }
-
-  private async getClient(): Promise<AzureOpenAI> {
-    if (!this.config.endpoint || !this.config.deploymentName) {
-      throw new Error("OpenAI service not configured: endpoint and deploymentName are required");
-    }
-
-    // Get fresh token
-    const token = await this.authService.acquireToken();
-
-    // Re-create client if token changed (or first time)
-    if (!this.client || this.currentToken !== token) {
-      this.currentToken = token;
-      this.client = new AzureOpenAI({
-        endpoint: this.config.endpoint,
-        deployment: this.config.deploymentName,
-        apiVersion: "2024-10-21",
-        // Use the token directly for authentication
-        apiKey: token,
-        // Mark as Azure AD token
-        dangerouslyAllowBrowser: false,
-      });
-    }
-
-    return this.client;
   }
 
   /**
@@ -57,17 +26,18 @@ export class OpenAIService {
       return "";
     }
 
-    try {
-      // For Azure OpenAI with Entra ID, we need to use fetch directly with bearer token
-      const token = await this.authService.acquireToken();
+    if (!this.config.endpoint || !this.config.apiKey) {
+      throw new Error("OpenAI service not configured: endpoint and apiKey are required");
+    }
 
+    try {
       const response = await fetch(
         `${this.config.endpoint}/openai/deployments/${this.config.deploymentName}/chat/completions?api-version=2024-10-21`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            "api-key": this.config.apiKey,
           },
           body: JSON.stringify({
             messages: [
@@ -101,7 +71,5 @@ export class OpenAIService {
    */
   updateConfig(config: OpenAIConfig): void {
     this.config = config;
-    this.client = null; // Force re-initialization
-    this.currentToken = null;
   }
 }

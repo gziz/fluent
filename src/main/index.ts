@@ -1,6 +1,11 @@
 import { app } from "electron";
 import { App } from "./app";
 
+// Polyfill for Microsoft Speech SDK which expects browser globals
+// Must be set before importing the SDK
+(global as unknown as { window: typeof globalThis }).window = global;
+(global as unknown as { self: typeof globalThis }).self = global;
+
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 

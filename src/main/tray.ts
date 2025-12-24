@@ -6,6 +6,7 @@ export interface TrayCallbacks {
   onSignIn: () => void;
   onSignOut: () => void;
   onOpenSettings: () => void;
+  onOpenLogs: () => void;
   onQuit: () => void;
 }
 

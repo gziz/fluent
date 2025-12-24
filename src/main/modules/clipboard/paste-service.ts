@@ -61,9 +61,9 @@ export class PasteService {
    */
   private async sendCtrlV(): Promise<void> {
     if (process.platform === "win32") {
-      // Use PowerShell's SendKeys to simulate Ctrl+V
-      // ^v means Ctrl+V in SendKeys notation
-      const command = `powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"`;
+      // Use PowerShell with WScript.Shell SendKeys - more reliable for Ctrl+V
+      // Using {^v} doesn't work, we need to use key down/up approach
+      const command = `powershell -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $wshell.SendKeys('^v')"`;
       await execAsync(command);
     } else if (process.platform === "darwin") {
       // macOS: use osascript to simulate Cmd+V

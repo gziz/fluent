@@ -1,19 +1,24 @@
 // Application configuration types
 
+// Auth config kept for future browser-based login (MSAL)
 export interface AuthConfig {
   clientId: string;
   tenantId: string;
+  // Future: authMethod: "apiKey" | "browser";
 }
 
 export interface SpeechConfig {
-  resourceId: string;
+  subscriptionKey: string; // API key from Azure Portal
   region: string;
   language: string;
+  // resourceId kept for future Entra ID auth
+  resourceId?: string;
 }
 
 export interface OpenAIConfig {
   endpoint: string;
   deploymentName: string;
+  apiKey: string; // API key from Azure Portal
 }
 
 export interface HotkeyConfig {
@@ -23,6 +28,7 @@ export interface HotkeyConfig {
 export interface PreferencesConfig {
   playAudioFeedback: boolean;
   restoreClipboard: boolean;
+  startAtLogin: boolean;
 }
 
 export interface AppConfig {
@@ -56,6 +62,19 @@ export const IPC_CHANNELS = {
   CONFIG_GET: "config:get",
   CONFIG_SET: "config:set",
   CONFIG_GET_ALL: "config:get-all",
+
+  // Speech (renderer <-> main)
+  SPEECH_START: "speech:start",
+  SPEECH_STOP: "speech:stop",
+  SPEECH_READY: "speech:ready",
+  SPEECH_STARTED: "speech:started",
+  SPEECH_PARTIAL: "speech:partial",
+  SPEECH_RESULT: "speech:result",
+  SPEECH_ERROR: "speech:error",
+
+  // Overlay
+  OVERLAY_STATE: "overlay:state",
+  OVERLAY_HIDE: "overlay:hide",
 
   // Status
   STATUS_CHANGED: "status:changed",

@@ -198,8 +198,12 @@ export class App {
         `Could not register hotkey: ${accelerator}\n\nIt may be in use by another application.`
       );
     }
+  }
 
-    // Register ESC key to cancel recording
+  /**
+   * Register ESC key for canceling recording (only during active recording)
+   */
+  private registerEscapeShortcut(): void {
     const escSuccess = globalShortcut.register("Escape", () => {
       this.handleEscapeKeyPress();
     });
@@ -209,6 +213,14 @@ export class App {
     } else {
       console.log("[App] Failed to register ESC key (may be in use, non-critical)");
     }
+  }
+
+  /**
+   * Unregister ESC key shortcut
+   */
+  private unregisterEscapeShortcut(): void {
+    globalShortcut.unregister("Escape");
+    console.log("[App] ESC key unregistered");
   }
 
   /**
@@ -269,6 +281,7 @@ export class App {
     try {
       const startTime = Date.now();
       this.setState("recording");
+      this.registerEscapeShortcut();
       this.showOverlay("recording");
       console.log("[App] State changed to: recording");
 
@@ -302,6 +315,7 @@ export class App {
    */
   private async stopRecordingAndProcess(): Promise<void> {
     try {
+      this.unregisterEscapeShortcut();
       this.setState("processing");
       this.showOverlay("processing");
       console.log("[App] State changed to: processing");
@@ -375,6 +389,7 @@ export class App {
     }
 
     console.log("[App] Canceling recording...");
+    this.unregisterEscapeShortcut();
 
     // Stop the speech recognition
     if (this.recorderWindow) {

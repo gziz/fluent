@@ -70,6 +70,16 @@ ipcRenderer.on(IPC_CHANNELS.SPEECH_START, (_event, config: { subscriptionKey: st
   }
 });
 
+// Handle sound playback requests from main process
+ipcRenderer.on(IPC_CHANNELS.SOUND_PLAY, (_event, soundPath: string) => {
+  try {
+    const audio = new Audio(`file:///${soundPath.replace(/\\/g, '/')}`);
+    audio.play().catch(err => console.error('[Preload] Failed to play sound:', err));
+  } catch (error) {
+    console.error('[Preload] Error creating audio:', error);
+  }
+});
+
 ipcRenderer.on(IPC_CHANNELS.SPEECH_STOP, () => {
   console.log('[Preload] Stopping recognition');
   

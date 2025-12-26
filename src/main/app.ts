@@ -169,6 +169,9 @@ export class App {
       path.join(__dirname, "../../src/renderer/recorder.html")
     );
 
+    // Wire up sound service to use this window for instant audio playback
+    this.soundService.setRendererWindow(this.recorderWindow);
+
     // Prevent closing - just hide instead
     this.recorderWindow.on("close", (e) => {
       if (this.recorderWindow) {

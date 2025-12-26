@@ -1,18 +1,36 @@
 import { exec } from "child_process";
+import { BrowserWindow } from "electron";
+import { IPC_CHANNELS } from "../../../shared/types";
 
 export type SoundEvent = "recordingStart" | "recordingReady";
 
-// Map events to sounds - easy to customize later
-const SOUND_MAP: Record<SoundEvent, { type: "system" | "custom"; name: string }> = {
-  recordingStart: { type: "system", name: "Ping" },
-  recordingReady: { type: "system", name: "Glass" },
+// Platform-specific sound mappings
+const MAC_SOUNDS: Record<SoundEvent, string> = {
+  recordingStart: "/System/Library/Sounds/Ping.aiff",
+  recordingReady: "/System/Library/Sounds/Glass.aiff",
 };
 
-// Available macOS system sounds for reference:
-// Basso, Blow, Bottle, Frog, Funk, Glass, Hero, Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
+// Windows sounds from C:\Windows\Media\
+const WINDOWS_SOUNDS: Record<SoundEvent, string> = {
+  recordingStart: "C:\\Windows\\Media\\Windows Notify.wav",
+  recordingReady: "C:\\Windows\\Media\\Windows Notify.wav",
+};
 
 export class SoundService {
   private enabled: boolean = true;
+  private platform: NodeJS.Platform;
+  private rendererWindow: BrowserWindow | null = null;
+
+  constructor() {
+    this.platform = process.platform;
+  }
+
+  /**
+   * Set the renderer window to use for playing sounds (instant playback)
+   */
+  setRendererWindow(window: BrowserWindow): void {
+    this.rendererWindow = window;
+  }
 
   /**
    * Play a sound for a specific event
@@ -20,37 +38,42 @@ export class SoundService {
   play(event: SoundEvent): void {
     if (!this.enabled) return;
 
-    const sound = SOUND_MAP[event];
-    
-    if (sound.type === "system") {
-      this.playSystemSound(sound.name);
+    const soundPath = this.platform === "darwin"
+      ? MAC_SOUNDS[event]
+      : WINDOWS_SOUNDS[event];
+
+    if (!soundPath) {
+      console.log(`[SoundService] Unsupported platform: ${this.platform}`);
+      return;
+    }
+
+    // Prefer playing through renderer (instant) if available
+    if (this.rendererWindow && !this.rendererWindow.isDestroyed()) {
+      this.playViaRenderer(soundPath);
+    } else if (this.platform === "darwin") {
+      // Fallback to afplay on Mac (still fast)
+      this.playViaMacCommand(soundPath);
     } else {
-      this.playCustomSound(sound.name);
+      console.log("[SoundService] No renderer window available for sound playback");
     }
   }
 
   /**
-   * Play a macOS system sound
+   * Play sound via renderer process using HTML5 Audio (instant)
    */
-  private playSystemSound(name: string): void {
-    const soundPath = `/System/Library/Sounds/${name}.aiff`;
-    exec(`afplay "${soundPath}"`, (error) => {
-      if (error) {
-        console.error(`[SoundService] Failed to play system sound: ${name}`, error);
-      }
-    });
+  private playViaRenderer(soundPath: string): void {
+    this.rendererWindow?.webContents.send(IPC_CHANNELS.SOUND_PLAY, soundPath);
   }
 
   /**
-   * Play a custom sound file (for future use)
-   * Sound files should be placed in src/renderer/sounds/
+   * Play sound via macOS afplay command (fast fallback)
    */
-  private playCustomSound(filename: string): void {
-    // TODO: Implement custom sound playback
-    // Options:
-    // 1. Use afplay with path to bundled sound file
-    // 2. Play through a hidden BrowserWindow with Web Audio API
-    console.log(`[SoundService] Custom sound not yet implemented: ${filename}`);
+  private playViaMacCommand(soundPath: string): void {
+    exec(`afplay "${soundPath}"`, (error) => {
+      if (error) {
+        console.error(`[SoundService] Failed to play Mac sound:`, error);
+      }
+    });
   }
 
   /**

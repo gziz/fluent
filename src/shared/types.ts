@@ -79,4 +79,7 @@ export const IPC_CHANNELS = {
   // Status
   STATUS_CHANGED: "status:changed",
   STATUS_ERROR: "status:error",
+
+  // Sound
+  SOUND_PLAY: "sound:play",
 } as const;

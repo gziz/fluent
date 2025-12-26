@@ -143,6 +143,58 @@
       color: #6a6a6a;
       margin-top: 4px;
     }
+    .hotkey-recorder {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      background: #1e1e1e;
+      cursor: pointer;
+      min-height: 38px;
+      transition: border-color 0.2s;
+    }
+    .hotkey-recorder:hover {
+      border-color: #569cd6;
+    }
+    .hotkey-recorder:focus {
+      outline: none;
+      border-color: #569cd6;
+      box-shadow: 0 0 0 2px rgba(86, 156, 214, 0.3);
+    }
+    .hotkey-recorder.recording {
+      border-color: #ce9178;
+      box-shadow: 0 0 0 2px rgba(206, 145, 120, 0.3);
+    }
+    .hotkey-keys {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+    }
+    .hotkey-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      background: #3c3c3c;
+      border: 1px solid #505050;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #d4d4d4;
+      min-width: 32px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .hotkey-placeholder {
+      color: #6a6a6a;
+      font-size: 13px;
+    }
+    .hotkey-edit-icon {
+      color: #6a6a6a;
+      font-size: 14px;
+      margin-left: auto;
+    }
   </style>
 </head>
 <body>
@@ -202,9 +254,14 @@
   <h2>Hotkey</h2>
   <div class="section">
     <div class="field">
-      <label for="accelerator">Hotkey</label>
-      <input type="text" id="accelerator" placeholder="Ctrl+Shift+Space">
-      <div class="help-text">Electron accelerator format. Examples: Ctrl+Shift+Space, Alt+R, CommandOrControl+Shift+D</div>
+      <label>Press to start/stop dictation</label>
+      <div id="hotkey-recorder" class="hotkey-recorder" tabindex="0">
+        <div id="hotkey-keys" class="hotkey-keys"></div>
+        <span id="hotkey-placeholder" class="hotkey-placeholder" style="display: none;">Press keys...</span>
+        <span class="hotkey-edit-icon">&#9998;</span>
+      </div>
+      <input type="hidden" id="accelerator">
+      <div class="help-text">Click to record a new hotkey combination</div>
     </div>
   </div>
 
@@ -243,6 +300,7 @@
 
         // Other settings
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
+        updateHotkeyDisplay();
         document.getElementById('restoreClipboard').checked = config.preferences.restoreClipboard !== false;
         document.getElementById('startAtLogin').checked = config.preferences.startAtLogin === true;
 
@@ -353,6 +411,164 @@
     function closeWindow() {
       window.close();
     }
+
+    // Hotkey recorder
+    const hotkeyRecorder = document.getElementById('hotkey-recorder');
+    const hotkeyKeys = document.getElementById('hotkey-keys');
+    const hotkeyPlaceholder = document.getElementById('hotkey-placeholder');
+    const acceleratorInput = document.getElementById('accelerator');
+    let isRecording = false;
+    let pendingAccelerator = '';
+    let pendingIsComplete = false;
+
+    // Convert accelerator string to display keys
+    function parseAccelerator(accelerator) {
+      if (!accelerator) return [];
+      return accelerator.split('+').map(key => {
+        // Normalize key names for display
+        const displayMap = {
+          'CommandOrControl': navigator.platform.includes('Mac') ? '⌘' : 'Ctrl',
+          'CmdOrCtrl': navigator.platform.includes('Mac') ? '⌘' : 'Ctrl',
+          'Command': '⌘',
+          'Cmd': '⌘',
+          'Control': 'Ctrl',
+          'Shift': '⇧ Shift',
+          'Alt': navigator.platform.includes('Mac') ? '⌥ Option' : 'Alt',
+          'Option': '⌥ Option',
+          'Meta': '⌘',
+          'Super': '⌘',
+          ' ': 'Space',
+        };
+        return displayMap[key] || key;
+      });
+    }
+
+    // Render key badges
+    function renderHotkeyKeys(keys) {
+      hotkeyKeys.innerHTML = '';
+      keys.forEach(key => {
+        const badge = document.createElement('span');
+        badge.className = 'hotkey-key';
+        badge.textContent = key;
+        hotkeyKeys.appendChild(badge);
+      });
+    }
+
+    // Update display from accelerator value
+    function updateHotkeyDisplay() {
+      const accelerator = acceleratorInput.value || 'Ctrl+Shift+Space';
+      const keys = parseAccelerator(accelerator);
+      renderHotkeyKeys(keys);
+      hotkeyPlaceholder.style.display = 'none';
+    }
+
+    // Enter recording mode
+    function startRecording() {
+      isRecording = true;
+      pendingAccelerator = '';
+      pendingIsComplete = false;
+      hotkeyRecorder.classList.add('recording');
+      hotkeyKeys.innerHTML = '';
+      hotkeyPlaceholder.style.display = 'inline';
+    }
+
+    // Exit recording mode
+    function stopRecording() {
+      isRecording = false;
+      hotkeyRecorder.classList.remove('recording');
+      hotkeyPlaceholder.style.display = 'none';
+      // Only save if we have a complete combination (modifier + non-modifier key)
+      if (pendingAccelerator && pendingIsComplete) {
+        acceleratorInput.value = pendingAccelerator;
+      }
+      // Always refresh display from current value
+      updateHotkeyDisplay();
+    }
+
+    // Convert key event to Electron accelerator format
+    function keyEventToAccelerator(e) {
+      const parts = [];
+
+      // Modifiers (in Electron order)
+      if (e.ctrlKey) parts.push('Ctrl');
+      if (e.altKey) parts.push('Alt');
+      if (e.shiftKey) parts.push('Shift');
+      if (e.metaKey) parts.push('Command');
+
+      // Main key (skip if only modifier)
+      const key = e.key;
+      const isModifierOnly = ['Control', 'Alt', 'Shift', 'Meta'].includes(key);
+
+      if (!isModifierOnly) {
+        // Normalize key names
+        let normalizedKey = key;
+        if (key === ' ') normalizedKey = 'Space';
+        else if (key.length === 1) normalizedKey = key.toUpperCase();
+        else if (key === 'ArrowUp') normalizedKey = 'Up';
+        else if (key === 'ArrowDown') normalizedKey = 'Down';
+        else if (key === 'ArrowLeft') normalizedKey = 'Left';
+        else if (key === 'ArrowRight') normalizedKey = 'Right';
+        else if (key === 'Escape') normalizedKey = 'Escape';
+        else if (key === 'Enter') normalizedKey = 'Return';
+        else if (key === 'Backspace') normalizedKey = 'Backspace';
+        else if (key === 'Delete') normalizedKey = 'Delete';
+        else if (key === 'Tab') normalizedKey = 'Tab';
+
+        parts.push(normalizedKey);
+      }
+
+      return { accelerator: parts.join('+'), isComplete: !isModifierOnly && parts.length > 0 };
+    }
+
+    // Handle keydown in recording mode
+    hotkeyRecorder.addEventListener('keydown', (e) => {
+      if (!isRecording) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Escape cancels recording without saving
+      if (e.key === 'Escape') {
+        pendingAccelerator = '';
+        stopRecording();
+        hotkeyRecorder.blur();
+        return;
+      }
+
+      const { accelerator, isComplete } = keyEventToAccelerator(e);
+
+      if (accelerator) {
+        // Track the pending accelerator and whether it's complete
+        pendingAccelerator = accelerator;
+        pendingIsComplete = isComplete;
+
+        // Show keys as they're pressed
+        const keys = parseAccelerator(accelerator);
+        renderHotkeyKeys(keys);
+        hotkeyPlaceholder.style.display = 'none';
+
+        // If we have a complete combination (modifier + key), finalize immediately
+        if (isComplete) {
+          stopRecording();
+          hotkeyRecorder.blur();
+        }
+      }
+    });
+
+    // Click to start recording
+    hotkeyRecorder.addEventListener('click', () => {
+      if (!isRecording) {
+        startRecording();
+        hotkeyRecorder.focus();
+      }
+    });
+
+    // Blur to cancel recording
+    hotkeyRecorder.addEventListener('blur', () => {
+      if (isRecording) {
+        stopRecording();
+      }
+    });
 
     // Event listeners
     document.getElementById('save-btn').addEventListener('click', saveConfig);

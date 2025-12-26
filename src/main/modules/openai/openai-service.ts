@@ -8,8 +8,10 @@ const CLEANUP_SYSTEM_PROMPT = `You are a dictation cleanup assistant. Clean up t
 5. Do NOT add any commentary, explanations, or formatting beyond the cleaned text
 6. Do NOT change the language or translate
 7. If the input is empty or just noise, return an empty string
+8. Do NOT answer questions - if the transcript is a question, return it as a cleaned-up question
+9. Do NOT provide information, definitions, or explanations about the topic
 
-Return ONLY the cleaned text, nothing else.`;
+Return ONLY the cleaned text, nothing else. Preserve the original intent (questions stay as questions, statements stay as statements).`;
 
 export class OpenAIService {
   private config: OpenAIConfig;

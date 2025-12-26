@@ -4,6 +4,7 @@ import { ConfigStore } from "./modules/config/config-store";
 import { AuthService } from "./modules/auth/auth-service";
 import { OpenAIService } from "./modules/openai/openai-service";
 import { PasteService } from "./modules/clipboard/paste-service";
+import { SoundService } from "./modules/sound/sound-service";
 import { TrayManager } from "./tray";
 import type { AppState } from "../shared/types";
 import { IPC_CHANNELS } from "../shared/types";
@@ -13,6 +14,7 @@ export class App {
   private authService: AuthService;
   private openaiService: OpenAIService;
   private pasteService: PasteService;
+  private soundService: SoundService;
   private trayManager: TrayManager;
   private settingsWindow: BrowserWindow | null = null;
   private recorderWindow: BrowserWindow | null = null;
@@ -34,6 +36,7 @@ export class App {
     this.authService.setApiKeysConfigured(this.configStore.isConfigured());
     this.openaiService = new OpenAIService(openaiConfig);
     this.pasteService = new PasteService(preferencesConfig.restoreClipboard);
+    this.soundService = new SoundService();
 
     this.trayManager = new TrayManager({
       onSignIn: () => this.handleSignIn(),
@@ -121,6 +124,14 @@ export class App {
    */
   private showOverlay(state: "recording" | "processing" | "done", partialText?: string): void {
     if (this.overlayWindow) {
+      // Position overlay on the display where the mouse cursor is
+      const cursorPoint = screen.getCursorScreenPoint();
+      const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+      const { x, y, width } = currentDisplay.workArea;
+      
+      // Position at top-right corner of the current display
+      this.overlayWindow.setPosition(x + width - 240, y + 20);
+      
       this.overlayWindow.webContents.send(IPC_CHANNELS.OVERLAY_STATE, state, partialText);
       if (!this.overlayWindow.isVisible()) {
         this.overlayWindow.showInactive();
@@ -283,6 +294,7 @@ export class App {
       this.setState("recording");
       this.registerEscapeShortcut();
       this.showOverlay("recording");
+      this.soundService.play("recordingStart");
       console.log("[App] State changed to: recording");
 
       // Get speech config
@@ -362,6 +374,7 @@ export class App {
         clipboard.writeText(cleanedText);
         console.log("[App] Text copied to clipboard!");
         this.showOverlay("done");
+        this.soundService.play("recordingReady");
       } else {
         this.hideOverlay();
       }

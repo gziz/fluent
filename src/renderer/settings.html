@@ -268,12 +268,15 @@
   <h2>Preferences</h2>
   <div class="section">
     <div class="field checkbox-field">
-      <input type="checkbox" id="restoreClipboard">
-      <label for="restoreClipboard">Restore clipboard after paste</label>
-    </div>
-    <div class="field checkbox-field">
       <input type="checkbox" id="startAtLogin">
       <label for="startAtLogin">Start at login</label>
+    </div>
+    <div class="field checkbox-field">
+      <input type="checkbox" id="useDirectTyping">
+      <label for="useDirectTyping">Type text directly (instead of clipboard paste)</label>
+    </div>
+    <div class="help-text" style="margin-left: 24px; margin-top: -8px;">
+      Simulates keyboard typing. Slower for long text but doesn't modify clipboard.
     </div>
   </div>
 
@@ -301,8 +304,8 @@
         // Other settings
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
         updateHotkeyDisplay();
-        document.getElementById('restoreClipboard').checked = config.preferences.restoreClipboard !== false;
         document.getElementById('startAtLogin').checked = config.preferences.startAtLogin === true;
+        document.getElementById('useDirectTyping').checked = config.preferences.useDirectTyping === true;
 
         // Update configuration status
         updateConfigStatus();
@@ -364,8 +367,8 @@
 
         await window.api.config.set('preferences', {
           playAudioFeedback: true,
-          restoreClipboard: document.getElementById('restoreClipboard').checked,
           startAtLogin: document.getElementById('startAtLogin').checked,
+          useDirectTyping: document.getElementById('useDirectTyping').checked,
         });
 
         updateConfigStatus();

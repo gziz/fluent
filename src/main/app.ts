@@ -1,4 +1,4 @@
-import { app, globalShortcut, dialog, BrowserWindow, ipcMain, clipboard, Notification, screen } from "electron";
+import { app, globalShortcut, dialog, BrowserWindow, ipcMain, Notification, screen } from "electron";
 import * as path from "path";
 import { ConfigStore } from "./modules/config/config-store";
 import { AuthService } from "./modules/auth/auth-service";
@@ -35,7 +35,7 @@ export class App {
     this.authService = new AuthService(authConfig);
     this.authService.setApiKeysConfigured(this.configStore.isConfigured());
     this.openaiService = new OpenAIService(openaiConfig);
-    this.pasteService = new PasteService(preferencesConfig.restoreClipboard);
+    this.pasteService = new PasteService(preferencesConfig.useDirectTyping);
     this.soundService = new SoundService();
 
     this.trayManager = new TrayManager({
@@ -369,10 +369,10 @@ export class App {
       const cleanedText = await this.openaiService.cleanupTranscript(transcript);
       console.log(`[App] Cleaned text received: "${cleanedText}"`);
 
-      // Copy to clipboard and show done state
+      // Insert text (either via clipboard paste or direct typing)
       if (cleanedText.trim()) {
-        clipboard.writeText(cleanedText);
-        console.log("[App] Text copied to clipboard!");
+        await this.pasteService.insertText(cleanedText);
+        console.log("[App] Text inserted!");
         this.showOverlay("done");
         this.soundService.play("recordingReady");
       } else {
@@ -553,7 +553,7 @@ export class App {
     this.authService.updateConfig(authConfig);
     this.authService.setApiKeysConfigured(this.configStore.isConfigured());
     this.openaiService.updateConfig(openaiConfig);
-    this.pasteService.setRestoreClipboard(preferencesConfig.restoreClipboard);
+    this.pasteService.setUseDirectTyping(preferencesConfig.useDirectTyping);
     this.applyStartAtLogin(preferencesConfig.startAtLogin);
 
     // Update tray auth status

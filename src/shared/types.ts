@@ -27,8 +27,8 @@ export interface HotkeyConfig {
 
 export interface PreferencesConfig {
   playAudioFeedback: boolean;
-  restoreClipboard: boolean;
   startAtLogin: boolean;
+  useDirectTyping: boolean;
 }
 
 export interface AppConfig {

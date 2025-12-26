@@ -26,8 +26,8 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   preferences: {
     playAudioFeedback: true,
-    restoreClipboard: true,
     startAtLogin: false,
+    useDirectTyping: false,
   },
 };
 

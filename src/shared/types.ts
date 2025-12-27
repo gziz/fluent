@@ -25,10 +25,16 @@ export interface HotkeyConfig {
   accelerator: string; // Electron accelerator format, e.g., "Ctrl+Shift+Space"
 }
 
+// Paste mode options:
+// - "paste": Use clipboard + Ctrl/Cmd+V to paste the whole thing
+// - "type": Type text character by character (slower but some apps prefer it)
+// - "clipboard": Just copy to clipboard, don't paste
+export type PasteMode = "paste" | "type" | "clipboard";
+
 export interface PreferencesConfig {
   playAudioFeedback: boolean;
   startAtLogin: boolean;
-  useDirectTyping: boolean;
+  pasteMode: PasteMode;
 }
 
 export interface AppConfig {

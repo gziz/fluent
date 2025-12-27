@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: AppConfig = {
   preferences: {
     playAudioFeedback: true,
     startAtLogin: false,
-    useDirectTyping: false,
+    pasteMode: "paste",
   },
 };
 

@@ -35,7 +35,7 @@ export class App {
     this.authService = new AuthService(authConfig);
     this.authService.setApiKeysConfigured(this.configStore.isConfigured());
     this.openaiService = new OpenAIService(openaiConfig);
-    this.pasteService = new PasteService(preferencesConfig.useDirectTyping);
+    this.pasteService = new PasteService(preferencesConfig.pasteMode || "paste");
     this.soundService = new SoundService();
 
     this.trayManager = new TrayManager({
@@ -556,7 +556,7 @@ export class App {
     this.authService.updateConfig(authConfig);
     this.authService.setApiKeysConfigured(this.configStore.isConfigured());
     this.openaiService.updateConfig(openaiConfig);
-    this.pasteService.setUseDirectTyping(preferencesConfig.useDirectTyping);
+    this.pasteService.setPasteMode(preferencesConfig.pasteMode || "paste");
     this.applyStartAtLogin(preferencesConfig.startAtLogin);
 
     // Update tray auth status

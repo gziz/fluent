@@ -16,10 +16,12 @@
     "@azure/identity": "^4.4.0",
     "@azure/msal-node": "^2.13.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.38.0",
-    "openai": "^4.67.0"
+    "openai": "^4.67.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "@types/ws": "^8.18.1",
     "electron": "^32.0.0",
     "electron-builder": "^25.0.0",
     "typescript": "^5.5.0"

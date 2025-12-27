@@ -300,7 +300,8 @@ export class App {
       this.soundService.play("recordingStart");
       console.log("[App] State changed to: recording");
 
-      // Get speech config
+      // Get OpenAI config for transcription
+      const openaiConfig = this.configStore.get("openai");
       const speechConfig = this.configStore.get("speech");
 
       // Send start command to recorder window
@@ -310,9 +311,10 @@ export class App {
 
       console.log("[App] Starting speech recognition via renderer...");
       this.recorderWindow.webContents.send(IPC_CHANNELS.SPEECH_START, {
-        subscriptionKey: speechConfig.subscriptionKey,
-        region: speechConfig.region,
-        language: speechConfig.language,
+        endpoint: openaiConfig.endpoint,
+        apiKey: openaiConfig.apiKey,
+        transcriptionDeploymentName: openaiConfig.transcriptionDeploymentName,
+        language: speechConfig.language, // Keep for locale hint
       });
       console.log(`[App] Speech recognition started (${Date.now() - startTime}ms total)`);
     } catch (error) {
@@ -474,12 +476,10 @@ export class App {
       title: "Configuration Required",
       message: "My Whisper needs to be configured before use.",
       detail:
-        "Please configure your Azure API keys:\n\n" +
-        "1. Speech Service API Key\n" +
-        "2. Speech Region (e.g., eastus)\n" +
-        "3. OpenAI API Key\n" +
-        "4. OpenAI Endpoint\n" +
-        "5. OpenAI Deployment Name\n\n" +
+        "Please configure your Azure OpenAI settings:\n\n" +
+        "1. OpenAI Endpoint (e.g., https://your-resource.openai.azure.com)\n" +
+        "2. OpenAI API Key\n" +
+        "3. Transcription Deployment Name (e.g., gpt-4o-transcribe)\n\n" +
         "Open Settings from the tray menu to configure.",
       buttons: ["Open Settings", "Later"],
     }).then((result) => {

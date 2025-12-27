@@ -19,6 +19,7 @@ const DEFAULT_CONFIG: AppConfig = {
   openai: {
     endpoint: "",
     deploymentName: "gpt-4o-mini",
+    transcriptionDeploymentName: "gpt-4o-transcribe",
     apiKey: "",
   },
   hotkey: {
@@ -182,12 +183,11 @@ export class ConfigStore {
   }
 
   isConfigured(): boolean {
-    // Check that API keys and endpoints are configured
+    // Check that Azure OpenAI is configured for transcription
     return !!(
-      this.config.speech.subscriptionKey &&
-      this.config.speech.region &&
       this.config.openai.endpoint &&
-      this.config.openai.apiKey
+      this.config.openai.apiKey &&
+      this.config.openai.transcriptionDeploymentName
     );
   }
 

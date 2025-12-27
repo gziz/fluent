@@ -213,25 +213,6 @@
     </div>
   </div>
 
-  <h2>Azure Speech Service</h2>
-  <div class="section">
-    <div class="field">
-      <label for="speechKey">API Key</label>
-      <input type="password" id="speechKey" placeholder="Enter your Speech service key">
-      <div class="help-text">From Azure Portal > Speech resource > Keys and Endpoint > Key 1 or Key 2</div>
-    </div>
-    <div class="field">
-      <label for="region">Region</label>
-      <input type="text" id="region" placeholder="eastus">
-      <div class="help-text">e.g., eastus, westus2, westeurope</div>
-    </div>
-    <div class="field">
-      <label for="language">Language</label>
-      <input type="text" id="language" placeholder="en-US">
-      <div class="help-text">Speech recognition language code</div>
-    </div>
-  </div>
-
   <h2>Azure OpenAI</h2>
   <div class="section">
     <div class="field">
@@ -245,9 +226,23 @@
       <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint</div>
     </div>
     <div class="field">
-      <label for="deploymentName">Deployment Name</label>
+      <label for="transcriptionDeploymentName">Transcription Deployment Name</label>
+      <input type="text" id="transcriptionDeploymentName" placeholder="gpt-4o-transcribe">
+      <div class="help-text">For real-time speech-to-text (required) - Deploy gpt-4o-transcribe model</div>
+    </div>
+    <div class="field">
+      <label for="deploymentName">Text Cleanup Deployment Name</label>
       <input type="text" id="deploymentName" placeholder="gpt-4o-mini">
-      <div class="help-text">The name of your deployed model</div>
+      <div class="help-text">For cleaning up transcriptions (optional) - e.g., gpt-4o-mini</div>
+    </div>
+  </div>
+
+  <h2>Speech Settings</h2>
+  <div class="section">
+    <div class="field">
+      <label for="language">Language</label>
+      <input type="text" id="language" placeholder="en-US">
+      <div class="help-text">Speech recognition language code (e.g., en-US, es-ES, fr-FR)</div>
     </div>
   </div>
 
@@ -291,14 +286,13 @@
       try {
         const config = await window.api.config.getAll();
 
-        // Speech config
-        document.getElementById('speechKey').value = config.speech.subscriptionKey || '';
-        document.getElementById('region').value = config.speech.region || 'eastus';
+        // Speech config (language only)
         document.getElementById('language').value = config.speech.language || 'en-US';
 
         // OpenAI config
         document.getElementById('openaiKey').value = config.openai.apiKey || '';
         document.getElementById('endpoint').value = config.openai.endpoint || '';
+        document.getElementById('transcriptionDeploymentName').value = config.openai.transcriptionDeploymentName || 'gpt-4o-transcribe';
         document.getElementById('deploymentName').value = config.openai.deploymentName || 'gpt-4o-mini';
 
         // Other settings
@@ -319,12 +313,11 @@
       const dot = document.getElementById('auth-dot');
       const text = document.getElementById('auth-text');
 
-      const speechKey = document.getElementById('speechKey').value.trim();
-      const region = document.getElementById('region').value.trim();
       const openaiKey = document.getElementById('openaiKey').value.trim();
       const endpoint = document.getElementById('endpoint').value.trim();
+      const transcriptionDeploymentName = document.getElementById('transcriptionDeploymentName').value.trim();
 
-      const isConfigured = speechKey && region && openaiKey && endpoint;
+      const isConfigured = openaiKey && endpoint && transcriptionDeploymentName;
 
       if (isConfigured) {
         dot.className = 'auth-dot authenticated';
@@ -332,10 +325,9 @@
       } else {
         dot.className = 'auth-dot unauthenticated';
         const missing = [];
-        if (!speechKey) missing.push('Speech API key');
-        if (!region) missing.push('Region');
         if (!openaiKey) missing.push('OpenAI API key');
         if (!endpoint) missing.push('Endpoint');
+        if (!transcriptionDeploymentName) missing.push('Transcription deployment');
         text.textContent = 'Missing: ' + missing.join(', ');
       }
     }
@@ -350,14 +342,15 @@
         });
 
         await window.api.config.set('speech', {
-          subscriptionKey: document.getElementById('speechKey').value.trim(),
-          region: document.getElementById('region').value.trim() || 'eastus',
+          subscriptionKey: '', // Legacy - no longer used
+          region: 'eastus',    // Legacy - no longer used
           language: document.getElementById('language').value.trim() || 'en-US',
         });
 
         await window.api.config.set('openai', {
           apiKey: document.getElementById('openaiKey').value.trim(),
           endpoint: document.getElementById('endpoint').value.trim(),
+          transcriptionDeploymentName: document.getElementById('transcriptionDeploymentName').value.trim() || 'gpt-4o-transcribe',
           deploymentName: document.getElementById('deploymentName').value.trim() || 'gpt-4o-mini',
         });
 
@@ -578,7 +571,7 @@
     document.getElementById('close-btn').addEventListener('click', closeWindow);
 
     // Update status when fields change
-    ['speechKey', 'region', 'openaiKey', 'endpoint'].forEach(id => {
+    ['openaiKey', 'endpoint', 'transcriptionDeploymentName'].forEach(id => {
       document.getElementById(id).addEventListener('input', updateConfigStatus);
     });
 

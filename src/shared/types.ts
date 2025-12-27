@@ -17,7 +17,8 @@ export interface SpeechConfig {
 
 export interface OpenAIConfig {
   endpoint: string;
-  deploymentName: string;
+  deploymentName: string; // For text cleanup (e.g., gpt-4o-mini)
+  transcriptionDeploymentName: string; // For real-time transcription (e.g., gpt-4o-transcribe)
   apiKey: string; // API key from Azure Portal
 }
 

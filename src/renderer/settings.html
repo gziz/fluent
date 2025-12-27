@@ -266,12 +266,16 @@
       <input type="checkbox" id="startAtLogin">
       <label for="startAtLogin">Start at login</label>
     </div>
-    <div class="field checkbox-field">
-      <input type="checkbox" id="useDirectTyping">
-      <label for="useDirectTyping">Type text directly (instead of clipboard paste)</label>
-    </div>
-    <div class="help-text" style="margin-left: 24px; margin-top: -8px;">
-      Simulates keyboard typing. Slower for long text but doesn't modify clipboard.
+    <div class="field">
+      <label for="pasteMode">Paste mode</label>
+      <select id="pasteMode">
+        <option value="paste">Paste with Ctrl+V / Cmd+V</option>
+        <option value="type">Type character by character</option>
+        <option value="clipboard">Copy to clipboard only (don't paste)</option>
+      </select>
+      <div class="help-text">
+        All modes copy the transcription to clipboard. "Paste" is fastest. "Type" simulates keyboard input (slower). "Clipboard only" lets you paste manually.
+      </div>
     </div>
   </div>
 
@@ -299,7 +303,12 @@
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
         updateHotkeyDisplay();
         document.getElementById('startAtLogin').checked = config.preferences.startAtLogin === true;
-        document.getElementById('useDirectTyping').checked = config.preferences.useDirectTyping === true;
+        // Handle pasteMode - support legacy useDirectTyping for backwards compatibility
+        let pasteMode = config.preferences.pasteMode || 'paste';
+        if (!config.preferences.pasteMode && config.preferences.useDirectTyping) {
+          pasteMode = 'type';
+        }
+        document.getElementById('pasteMode').value = pasteMode;
 
         // Update configuration status
         updateConfigStatus();
@@ -361,7 +370,7 @@
         await window.api.config.set('preferences', {
           playAudioFeedback: true,
           startAtLogin: document.getElementById('startAtLogin').checked,
-          useDirectTyping: document.getElementById('useDirectTyping').checked,
+          pasteMode: document.getElementById('pasteMode').value,
         });
 
         updateConfigStatus();

@@ -1,29 +1,51 @@
 import { clipboard } from "electron";
 import { exec } from "child_process";
 import { promisify } from "util";
+import type { PasteMode } from "../../../shared/types";
 
 const execAsync = promisify(exec);
 
 export class PasteService {
-  private useDirectTyping: boolean;
+  private pasteMode: PasteMode;
 
-  constructor(useDirectTyping: boolean = false) {
-    this.useDirectTyping = useDirectTyping;
+  constructor(pasteMode: PasteMode = "paste") {
+    this.pasteMode = pasteMode;
   }
 
   /**
-   * Insert text - either via direct typing or clipboard paste
+   * Insert text based on the current paste mode:
+   * - "paste": Copy to clipboard and simulate Ctrl/Cmd+V
+   * - "type": Copy to clipboard and type character by character
+   * - "clipboard": Just copy to clipboard, don't paste
    */
   async insertText(text: string): Promise<void> {
     if (!text) {
       return;
     }
 
-    if (this.useDirectTyping) {
-      await this.typeText(text);
-    } else {
-      await this.pasteText(text);
+    switch (this.pasteMode) {
+      case "type":
+        await this.typeText(text);
+        break;
+      case "clipboard":
+        await this.copyToClipboard(text);
+        break;
+      case "paste":
+      default:
+        await this.pasteText(text);
+        break;
     }
+  }
+
+  /**
+   * Copy text to clipboard without pasting
+   */
+  async copyToClipboard(text: string): Promise<void> {
+    if (!text) {
+      return;
+    }
+    clipboard.writeText(text);
+    console.log("[Paste] Text copied to clipboard (no paste)");
   }
 
   /**
@@ -177,10 +199,10 @@ export class PasteService {
   }
 
   /**
-   * Update direct typing preference
+   * Update paste mode preference
    */
-  setUseDirectTyping(useDirectTyping: boolean): void {
-    this.useDirectTyping = useDirectTyping;
+  setPasteMode(pasteMode: PasteMode): void {
+    this.pasteMode = pasteMode;
   }
 
   private delay(ms: number): Promise<void> {

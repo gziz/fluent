@@ -34,7 +34,8 @@ npm run dist:win     # Build Windows installer to release/
 | `config/config-store.ts` | JSON config storage in userData |
 | `speech/speech-service.ts` | Azure Speech SDK wrapper |
 | `openai/openai-service.ts` | Transcript cleanup via Azure OpenAI |
-| `clipboard/paste-service.ts` | Clipboard management |
+| `clipboard/paste-service.ts` | Text insertion with multiple paste modes |
+| `sound/sound-service.ts` | Cross-platform audio feedback playback |
 
 ### IPC Communication
 
@@ -54,9 +55,16 @@ Located in `App` class (`src/main/app.ts`):
 `ConfigStore` persists to `config.json` in Electron's userData. Shape defined in `src/shared/types.ts`:
 - `auth`: clientId, tenantId
 - `speech`: subscriptionKey, region, language
-- `openai`: endpoint, deploymentName, apiKey
+- `openai`: endpoint, deploymentName, transcriptionDeploymentName, apiKey
 - `hotkey`: accelerator string
-- `preferences`: playAudioFeedback, restoreClipboard, startAtLogin
+- `preferences`: playAudioFeedback, startAtLogin, pasteMode
+
+#### Paste Modes
+
+The `pasteMode` preference controls how transcribed text is inserted:
+- `paste` - Copy to clipboard and simulate Ctrl/Cmd+V (default, fastest)
+- `type` - Type text character-by-character via OS shell commands (slower, works in more apps)
+- `clipboard` - Copy to clipboard only, no automatic paste
 
 ## Key Patterns
 
@@ -64,3 +72,5 @@ Located in `App` class (`src/main/app.ts`):
 - Recorder window stays hidden - uses Web Audio API unavailable in main process
 - Overlay window uses `showInactive()` to avoid stealing focus
 - Single instance lock prevents multiple app instances
+- Sound playback uses renderer process for instant feedback, with macOS `afplay` fallback
+- Paste service uses platform-specific shell commands (osascript, PowerShell, xdotool) for text insertion

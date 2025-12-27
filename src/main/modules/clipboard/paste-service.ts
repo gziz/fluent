@@ -172,8 +172,14 @@ export class PasteService {
     // Simulate Ctrl+V / Cmd+V
     try {
       await this.sendCtrlV();
-    } catch (error) {
-      console.error("[Paste] Failed to send Ctrl+V:", error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Check for macOS accessibility permission error
+      if (process.platform === "darwin" && errorMessage.includes("not allowed to send keystrokes")) {
+        console.error("[Paste] Accessibility permission denied. Text copied to clipboard - grant permission in System Settings > Privacy & Security > Accessibility, or use 'Clipboard only' mode.");
+      } else {
+        console.error("[Paste] Failed to send Ctrl+V:", error);
+      }
       // Text is still in clipboard, user can paste manually
     }
   }

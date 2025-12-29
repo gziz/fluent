@@ -100,6 +100,8 @@ export class App {
       skipTaskbar: true,
       resizable: false,
       show: false,
+      // macOS: allow overlay to appear on fullscreen spaces
+      ...(process.platform === "darwin" && { visibleOnFullScreen: true }),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -107,6 +109,12 @@ export class App {
         preload: path.join(__dirname, "../preload/preload.js"),
       },
     });
+
+    // macOS: ensure overlay appears on all desktops/spaces and above fullscreen apps
+    if (process.platform === "darwin") {
+      this.overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      this.overlayWindow.setAlwaysOnTop(true, "screen-saver");
+    }
 
     this.overlayWindow.loadFile(
       path.join(__dirname, "../../src/renderer/overlay.html")

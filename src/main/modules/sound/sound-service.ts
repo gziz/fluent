@@ -47,12 +47,12 @@ export class SoundService {
       return;
     }
 
-    // Prefer playing through renderer (instant) if available
-    if (this.rendererWindow && !this.rendererWindow.isDestroyed()) {
-      this.playViaRenderer(soundPath);
-    } else if (this.platform === "darwin") {
-      // Fallback to afplay on Mac (still fast)
+    // On macOS, use afplay directly (more reliable for system sounds)
+    if (this.platform === "darwin") {
       this.playViaMacCommand(soundPath);
+    } else if (this.rendererWindow && !this.rendererWindow.isDestroyed()) {
+      // On Windows, use renderer for playback
+      this.playViaRenderer(soundPath);
     } else {
       console.log("[SoundService] No renderer window available for sound playback");
     }

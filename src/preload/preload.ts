@@ -73,7 +73,13 @@ ipcRenderer.on(IPC_CHANNELS.SPEECH_START, (_event, config: { subscriptionKey: st
 // Handle sound playback requests from main process
 ipcRenderer.on(IPC_CHANNELS.SOUND_PLAY, (_event, soundPath: string) => {
   try {
-    const audio = new Audio(`file:///${soundPath.replace(/\\/g, '/')}`);
+    // On macOS, paths start with '/', so we need file:// + path
+    // On Windows, paths start with 'C:\', so we need file:/// + path
+    const normalizedPath = soundPath.replace(/\\/g, '/');
+    const fileUrl = normalizedPath.startsWith('/')
+      ? `file://${normalizedPath}`
+      : `file:///${normalizedPath}`;
+    const audio = new Audio(fileUrl);
     audio.play().catch(err => console.error('[Preload] Failed to play sound:', err));
   } catch (error) {
     console.error('[Preload] Error creating audio:', error);

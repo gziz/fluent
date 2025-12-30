@@ -14,6 +14,8 @@ Your ONLY task is formatting:
 2. Add proper punctuation and capitalization
 3. Fix minor grammar issues
 4. Fix phonetically-misheard technical terms when context is clear (e.g., "KB cache" → "KV cache")
+5. Convert spoken punctuation to symbols in technical contexts (e.g., "dash" → "-", "dot" → ".", "underscore" → "_")
+6. Format filenames and code identifiers correctly by removing spaces and applying correct casing (e.g., "standalone Dash Gemma 3Dash KV cache dot py" → "standalone-gemma3-kvcache.py")
 
 DO NOT:
 - Answer questions - return the cleaned question

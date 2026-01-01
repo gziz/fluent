@@ -271,6 +271,13 @@
       <input type="checkbox" id="startAtLogin">
       <label for="startAtLogin">Start at login</label>
     </div>
+    <div class="field checkbox-field">
+      <input type="checkbox" id="enableOpenAICleanup" checked>
+      <label for="enableOpenAICleanup">Clean up transcript with OpenAI</label>
+    </div>
+    <div class="help-text" style="margin-left: 24px; margin-bottom: 12px;">
+      When enabled, uses Azure OpenAI to fix punctuation, grammar, and formatting. Disable for faster, raw transcription.
+    </div>
     <div class="field">
       <label for="pasteMode">Paste mode</label>
       <select id="pasteMode">
@@ -315,6 +322,7 @@
           pasteMode = 'type';
         }
         document.getElementById('pasteMode').value = pasteMode;
+        document.getElementById('enableOpenAICleanup').checked = config.preferences.enableOpenAICleanup !== false;
 
         // Update configuration status
         updateConfigStatus();
@@ -378,6 +386,7 @@
           playAudioFeedback: true,
           startAtLogin: document.getElementById('startAtLogin').checked,
           pasteMode: document.getElementById('pasteMode').value,
+          enableOpenAICleanup: document.getElementById('enableOpenAICleanup').checked,
         });
 
         updateConfigStatus();

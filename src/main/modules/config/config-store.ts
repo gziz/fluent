@@ -28,6 +28,7 @@ const DEFAULT_CONFIG: AppConfig = {
     playAudioFeedback: true,
     startAtLogin: false,
     pasteMode: "paste",
+    enableOpenAICleanup: true,
   },
 };
 

@@ -339,6 +339,9 @@ export class App {
    */
   private async stopRecordingAndProcess(): Promise<void> {
     try {
+      const stopButtonPressedTime = Date.now();
+      console.log("[App] ⏱️ Stop button pressed - starting latency measurement");
+      
       this.unregisterEscapeShortcut();
       this.setState("processing");
       this.showOverlay("processing");
@@ -367,7 +370,10 @@ export class App {
         }
       });
       
-      console.log(`[App] Raw transcript received: "${transcript}"`);
+      const rawTranscriptTime = Date.now();
+      const stopToTranscriptLatency = rawTranscriptTime - stopButtonPressedTime;
+      console.log(`[App] ⏱️ Raw transcript received in ${stopToTranscriptLatency}ms`);
+      console.log(`[App] Raw transcript: "${transcript}"`);
 
       if (!transcript.trim()) {
         console.log("[App] No speech detected - returning to idle");
@@ -376,17 +382,51 @@ export class App {
         return;
       }
 
-      // Clean up transcript with OpenAI
-      console.log("[App] Sending transcript to OpenAI for cleanup...");
-      const cleanedText = await this.openaiService.cleanupTranscript(transcript);
-      console.log(`[App] Cleaned text received: "${cleanedText}"`);
+      // Check if OpenAI cleanup is enabled
+      const preferencesConfig = this.configStore.get("preferences");
+      const enableOpenAICleanup = preferencesConfig.enableOpenAICleanup !== false;
+
+      let finalText: string;
+      let openaiLatency = 0;
+
+      if (enableOpenAICleanup) {
+        // Clean up transcript with OpenAI
+        console.log("[App] Sending transcript to OpenAI for cleanup...");
+        const openaiStartTime = Date.now();
+        finalText = await this.openaiService.cleanupTranscript(transcript);
+        const openaiEndTime = Date.now();
+        openaiLatency = openaiEndTime - openaiStartTime;
+        console.log(`[App] ⏱️ OpenAI cleanup completed in ${openaiLatency}ms`);
+        console.log(`[App] Cleaned text: "${finalText}"`);
+      } else {
+        console.log("[App] OpenAI cleanup disabled - using raw transcript");
+        finalText = transcript;
+      }
 
       // Insert text (either via clipboard paste or direct typing)
-      if (cleanedText.trim()) {
-        await this.pasteService.insertText(cleanedText);
-        console.log("[App] Text inserted!");
+      if (finalText.trim()) {
+        const pasteStartTime = Date.now();
+        await this.pasteService.insertText(finalText);
+        const pasteEndTime = Date.now();
+        const pasteLatency = pasteEndTime - pasteStartTime;
+        console.log(`[App] ⏱️ Text pasted in ${pasteLatency}ms`);
         this.showOverlay("done");
         this.soundService.play("recordingReady");
+        
+        // Log total latency breakdown
+        const totalLatency = pasteEndTime - stopButtonPressedTime;
+        console.log("[App] ═══════════════════════════════════════════");
+        console.log("[App] ⏱️ LATENCY BREAKDOWN:");
+        console.log(`[App]   • Stop → Raw transcript: ${stopToTranscriptLatency}ms`);
+        if (enableOpenAICleanup) {
+          console.log(`[App]   • OpenAI cleanup:        ${openaiLatency}ms`);
+        } else {
+          console.log(`[App]   • OpenAI cleanup:        SKIPPED`);
+        }
+        console.log(`[App]   • Paste text:            ${pasteLatency}ms`);
+        console.log(`[App]   ─────────────────────────────────────`);
+        console.log(`[App]   • TOTAL:                 ${totalLatency}ms`);
+        console.log("[App] ═══════════════════════════════════════════");
       } else {
         this.hideOverlay();
       }

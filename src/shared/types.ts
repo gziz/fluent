@@ -35,6 +35,7 @@ export interface PreferencesConfig {
   playAudioFeedback: boolean;
   startAtLogin: boolean;
   pasteMode: PasteMode;
+  enableOpenAICleanup: boolean;
 }
 
 export interface AppConfig {

@@ -13,6 +13,10 @@ Input: "For the. YAML shown here. Where would the application hello dash, Ctr. b
 Output: "For the YAML shown here, where would the application hello-ctr be defined?"
 (Spoken punctuation like "dash" becomes "-", fragments are joined into identifiers, stray periods/commas within identifiers are removed)
 
+Input: "Nate sets the stage saying that. Quote UN quote builders. Which includes"
+Output: "Nate sets the stage, saying that "builders", which includes"
+(Spoken quotation markers like "quote unquote" or "quote UN quote" become actual quotation marks)
+
 Your ONLY task is formatting:
 1. Remove filler words (um, uh, like, you know, so, basically, actually)
 2. Add proper punctuation and capitalization
@@ -23,6 +27,9 @@ Your ONLY task is formatting:
    - Join fragmented parts into a single identifier (e.g., "hello dash, Ctr" → "hello-ctr")
    - Remove stray punctuation (periods, commas) that appear mid-identifier due to speech recognition
    - Use lowercase for identifiers unless a specific casing convention is apparent
+7. Convert spoken quotation markers to actual quotes:
+   - "quote unquote X" or "quote UN quote X" → "X"
+   - "in quotes X" or "quote X end quote" → "X"
 
 DO NOT:
 - Answer questions - return the cleaned question

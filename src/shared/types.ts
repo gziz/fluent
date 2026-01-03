@@ -15,10 +15,16 @@ export interface SpeechConfig {
   resourceId?: string;
 }
 
+export type OpenAIProvider = "azure" | "openai";
+
 export interface OpenAIConfig {
-  endpoint: string;
-  deploymentName: string;
-  apiKey: string; // API key from Azure Portal
+  provider: OpenAIProvider;
+  apiKey: string;
+  // Azure-specific
+  endpoint?: string; // Azure endpoint URL
+  deploymentName?: string; // Azure deployment name
+  // OpenAI-specific
+  model?: string; // OpenAI model name (e.g., "gpt-4.1", "gpt-4.1-nano")
 }
 
 export interface HotkeyConfig {

@@ -36,7 +36,7 @@ Users now configure the app via Settings (tray menu):
 2. **Speech Region** - e.g., `eastus`, `westus2`
 3. **OpenAI API Key** - From Azure Portal → OpenAI resource → Keys and Endpoint
 4. **OpenAI Endpoint** - e.g., `https://your-resource.openai.azure.com`
-5. **Deployment Name** - e.g., `gpt-4o-mini`
+5. **Deployment Name** - e.g., `gpt-4.1-nano`
 
 ## Next Steps: Packaging
 

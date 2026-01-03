@@ -232,22 +232,41 @@
     </div>
   </div>
 
-  <h2>Azure OpenAI</h2>
+  <h2>OpenAI (Transcript Cleanup)</h2>
   <div class="section">
     <div class="field">
+      <label for="openaiProvider">Provider</label>
+      <select id="openaiProvider" onchange="toggleOpenAIFields()">
+        <option value="openai">OpenAI</option>
+        <option value="azure">Azure OpenAI</option>
+      </select>
+      <div class="help-text">Choose between standard OpenAI or Azure OpenAI</div>
+    </div>
+    <div class="field">
       <label for="openaiKey">API Key</label>
-      <input type="password" id="openaiKey" placeholder="Enter your OpenAI service key">
-      <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint > Key 1 or Key 2</div>
+      <input type="password" id="openaiKey" placeholder="Enter your API key">
+      <div id="openaiKeyHelp" class="help-text">From OpenAI platform > API Keys</div>
     </div>
-    <div class="field">
-      <label for="endpoint">Endpoint</label>
-      <input type="text" id="endpoint" placeholder="https://your-resource.openai.azure.com">
-      <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint</div>
+    <!-- OpenAI-specific fields -->
+    <div id="openai-fields">
+      <div class="field">
+        <label for="openaiModel">Model</label>
+        <input type="text" id="openaiModel" placeholder="gpt-4.1-nano">
+        <div class="help-text">e.g., gpt-4.1, gpt-4.1-nano, gpt-4.1-mini</div>
+      </div>
     </div>
-    <div class="field">
-      <label for="deploymentName">Deployment Name</label>
-      <input type="text" id="deploymentName" placeholder="gpt-4o-mini">
-      <div class="help-text">The name of your deployed model</div>
+    <!-- Azure-specific fields -->
+    <div id="azure-fields" style="display: none;">
+      <div class="field">
+        <label for="endpoint">Endpoint</label>
+        <input type="text" id="endpoint" placeholder="https://your-resource.openai.azure.com">
+        <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint</div>
+      </div>
+      <div class="field">
+        <label for="deploymentName">Deployment Name</label>
+        <input type="text" id="deploymentName" placeholder="gpt-4.1-nano">
+        <div class="help-text">The name of your deployed model</div>
+      </div>
     </div>
   </div>
 
@@ -276,7 +295,7 @@
       <label for="enableOpenAICleanup">Clean up transcript with OpenAI</label>
     </div>
     <div class="help-text" style="margin-left: 24px; margin-bottom: 12px;">
-      When enabled, uses Azure OpenAI to fix punctuation, grammar, and formatting. Disable for faster, raw transcription.
+      When enabled, uses OpenAI to fix punctuation, grammar, and formatting. Disable for faster, raw transcription.
     </div>
     <div class="field">
       <label for="pasteMode">Paste mode</label>
@@ -308,9 +327,12 @@
         document.getElementById('language').value = config.speech.language || 'en-US';
 
         // OpenAI config
+        document.getElementById('openaiProvider').value = config.openai.provider || 'openai';
         document.getElementById('openaiKey').value = config.openai.apiKey || '';
+        document.getElementById('openaiModel').value = config.openai.model || 'gpt-4.1-nano';
         document.getElementById('endpoint').value = config.openai.endpoint || '';
-        document.getElementById('deploymentName').value = config.openai.deploymentName || 'gpt-4o-mini';
+        document.getElementById('deploymentName').value = config.openai.deploymentName || '';
+        toggleOpenAIFields();
 
         // Other settings
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
@@ -339,9 +361,14 @@
       const speechKey = document.getElementById('speechKey').value.trim();
       const region = document.getElementById('region').value.trim();
       const openaiKey = document.getElementById('openaiKey').value.trim();
+      const openaiProvider = document.getElementById('openaiProvider').value;
       const endpoint = document.getElementById('endpoint').value.trim();
 
-      const isConfigured = speechKey && region && openaiKey && endpoint;
+      // For Azure, we need endpoint; for OpenAI, we just need the API key
+      const openaiConfigured = openaiProvider === 'azure' 
+        ? (openaiKey && endpoint) 
+        : openaiKey;
+      const isConfigured = speechKey && region && openaiConfigured;
 
       if (isConfigured) {
         dot.className = 'auth-dot authenticated';
@@ -352,7 +379,7 @@
         if (!speechKey) missing.push('Speech API key');
         if (!region) missing.push('Region');
         if (!openaiKey) missing.push('OpenAI API key');
-        if (!endpoint) missing.push('Endpoint');
+        if (openaiProvider === 'azure' && !endpoint) missing.push('Azure Endpoint');
         text.textContent = 'Missing: ' + missing.join(', ');
       }
     }
@@ -373,9 +400,11 @@
         });
 
         await window.api.config.set('openai', {
+          provider: document.getElementById('openaiProvider').value,
           apiKey: document.getElementById('openaiKey').value.trim(),
+          model: document.getElementById('openaiModel').value.trim() || 'gpt-4.1-nano',
           endpoint: document.getElementById('endpoint').value.trim(),
-          deploymentName: document.getElementById('deploymentName').value.trim() || 'gpt-4o-mini',
+          deploymentName: document.getElementById('deploymentName').value.trim(),
         });
 
         await window.api.config.set('hotkey', {
@@ -431,6 +460,25 @@
     // Close window
     function closeWindow() {
       window.close();
+    }
+
+    // Toggle OpenAI fields based on provider selection
+    function toggleOpenAIFields() {
+      const provider = document.getElementById('openaiProvider').value;
+      const openaiFields = document.getElementById('openai-fields');
+      const azureFields = document.getElementById('azure-fields');
+      const keyHelp = document.getElementById('openaiKeyHelp');
+
+      if (provider === 'azure') {
+        openaiFields.style.display = 'none';
+        azureFields.style.display = 'block';
+        keyHelp.textContent = 'From Azure Portal > OpenAI resource > Keys and Endpoint';
+      } else {
+        openaiFields.style.display = 'block';
+        azureFields.style.display = 'none';
+        keyHelp.textContent = 'From OpenAI platform > API Keys';
+      }
+      updateConfigStatus();
     }
 
     // Hotkey recorder

@@ -17,9 +17,13 @@ const DEFAULT_CONFIG: AppConfig = {
     language: "en-US",
   },
   openai: {
-    endpoint: "",
-    deploymentName: "gpt-4o-mini",
+    provider: "openai",
     apiKey: "",
+    // Azure-specific
+    endpoint: "",
+    deploymentName: "",
+    // OpenAI-specific
+    model: "gpt-4.1-nano",
   },
   hotkey: {
     accelerator: "Ctrl+Shift+Space",

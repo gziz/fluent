@@ -47,39 +47,30 @@ export class OpenAIService {
   }
 
   /**
-   * Clean up a raw transcript using Azure OpenAI
+   * Clean up a raw transcript using OpenAI or Azure OpenAI
    */
   async cleanupTranscript(transcript: string): Promise<string> {
     if (!transcript.trim()) {
       return "";
     }
 
-    if (!this.config.endpoint || !this.config.apiKey) {
-      throw new Error("OpenAI service not configured: endpoint and apiKey are required");
+    if (!this.config.apiKey) {
+      throw new Error("OpenAI service not configured: apiKey is required");
     }
 
     try {
-      const response = await fetch(
-        `${this.config.endpoint}/openai/deployments/${this.config.deploymentName}/chat/completions?api-version=2024-10-21`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-key": this.config.apiKey,
-          },
-          body: JSON.stringify({
-            messages: [
-              { role: "system", content: CLEANUP_SYSTEM_PROMPT },
-              { role: "user", content: transcript },
-            ],
-            max_tokens: 8000,
-          }),
-        }
-      );
+      const { url, headers, body } = this.buildRequest(transcript);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Azure OpenAI API error: ${response.status} - ${errorText}`);
+        const provider = this.config.provider === "azure" ? "Azure OpenAI" : "OpenAI";
+        throw new Error(`${provider} API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
@@ -90,6 +81,52 @@ export class OpenAIService {
       console.error("[OpenAI] Failed to cleanup transcript:", error);
       // Return original transcript if cleanup fails
       return transcript;
+    }
+  }
+
+  /**
+   * Build the request URL, headers, and body based on the provider
+   */
+  private buildRequest(transcript: string): {
+    url: string;
+    headers: Record<string, string>;
+    body: Record<string, unknown>;
+  } {
+    const messages = [
+      { role: "system", content: CLEANUP_SYSTEM_PROMPT },
+      { role: "user", content: transcript },
+    ];
+
+    if (this.config.provider === "azure") {
+      if (!this.config.endpoint || !this.config.deploymentName) {
+        throw new Error("Azure OpenAI requires endpoint and deploymentName");
+      }
+      return {
+        url: `${this.config.endpoint}/openai/deployments/${this.config.deploymentName}/chat/completions?api-version=2024-10-21`,
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": this.config.apiKey,
+        },
+        body: {
+          messages,
+          max_tokens: 8000,
+        },
+      };
+    } else {
+      // Standard OpenAI API
+      const model = this.config.model || "gpt-4.1-nano";
+      return {
+        url: "https://api.openai.com/v1/chat/completions",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.config.apiKey}`,
+        },
+        body: {
+          model,
+          messages,
+          max_tokens: 8000,
+        },
+      };
     }
   }
 

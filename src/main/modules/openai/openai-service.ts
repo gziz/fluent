@@ -109,7 +109,6 @@ export class OpenAIService {
         },
         body: {
           messages,
-          max_tokens: 8000,
         },
       };
     } else {
@@ -124,7 +123,6 @@ export class OpenAIService {
         body: {
           model,
           messages,
-          max_tokens: 8000,
         },
       };
     }

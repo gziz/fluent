@@ -340,7 +340,7 @@ export class App {
   private async stopRecordingAndProcess(): Promise<void> {
     try {
       const stopButtonPressedTime = Date.now();
-      console.log("[App] ⏱️ Stop button pressed - starting latency measurement");
+      console.log("[App] [TIMER] Stop button pressed - starting latency measurement");
       
       this.unregisterEscapeShortcut();
       this.setState("processing");
@@ -372,7 +372,7 @@ export class App {
       
       const rawTranscriptTime = Date.now();
       const stopToTranscriptLatency = rawTranscriptTime - stopButtonPressedTime;
-      console.log(`[App] ⏱️ Raw transcript received in ${stopToTranscriptLatency}ms`);
+      console.log(`[App] [TIMER] Raw transcript received in ${stopToTranscriptLatency}ms`);
       console.log(`[App] Raw transcript: "${transcript}"`);
 
       if (!transcript.trim()) {
@@ -396,7 +396,7 @@ export class App {
         finalText = await this.openaiService.cleanupTranscript(transcript);
         const openaiEndTime = Date.now();
         openaiLatency = openaiEndTime - openaiStartTime;
-        console.log(`[App] ⏱️ OpenAI cleanup completed in ${openaiLatency}ms`);
+        console.log(`[App] [TIMER] OpenAI cleanup completed in ${openaiLatency}ms`);
         console.log(`[App] Cleaned text: "${finalText}"`);
       } else {
         console.log("[App] OpenAI cleanup disabled - using raw transcript");
@@ -409,24 +409,24 @@ export class App {
         await this.pasteService.insertText(finalText);
         const pasteEndTime = Date.now();
         const pasteLatency = pasteEndTime - pasteStartTime;
-        console.log(`[App] ⏱️ Text pasted in ${pasteLatency}ms`);
+        console.log(`[App] [TIMER] Text pasted in ${pasteLatency}ms`);
         this.showOverlay("done");
         this.soundService.play("recordingReady");
         
         // Log total latency breakdown
         const totalLatency = pasteEndTime - stopButtonPressedTime;
-        console.log("[App] ═══════════════════════════════════════════");
-        console.log("[App] ⏱️ LATENCY BREAKDOWN:");
-        console.log(`[App]   • Stop → Raw transcript: ${stopToTranscriptLatency}ms`);
+        console.log("[App] ==============================================");
+        console.log("[App] LATENCY BREAKDOWN:");
+        console.log(`[App]   - Stop -> Raw transcript: ${stopToTranscriptLatency}ms`);
         if (enableOpenAICleanup) {
-          console.log(`[App]   • OpenAI cleanup:        ${openaiLatency}ms`);
+          console.log(`[App]   - OpenAI cleanup:        ${openaiLatency}ms`);
         } else {
-          console.log(`[App]   • OpenAI cleanup:        SKIPPED`);
+          console.log(`[App]   - OpenAI cleanup:        SKIPPED`);
         }
-        console.log(`[App]   • Paste text:            ${pasteLatency}ms`);
-        console.log(`[App]   ─────────────────────────────────────`);
-        console.log(`[App]   • TOTAL:                 ${totalLatency}ms`);
-        console.log("[App] ═══════════════════════════════════════════");
+        console.log(`[App]   - Paste text:            ${pasteLatency}ms`);
+        console.log(`[App]   --------------------------------------`);
+        console.log(`[App]   - TOTAL:                 ${totalLatency}ms`);
+        console.log("[App] ==============================================");
       } else {
         this.hideOverlay();
       }

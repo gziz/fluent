@@ -38,6 +38,9 @@ export class SoundService {
   play(event: SoundEvent): void {
     if (!this.enabled) return;
 
+    // Skip sound playback on Windows
+    if (this.platform === "win32") return;
+
     const soundPath = this.platform === "darwin"
       ? MAC_SOUNDS[event]
       : WINDOWS_SOUNDS[event];

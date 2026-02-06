@@ -92,7 +92,7 @@ export class App {
 
     this.overlayWindow = new BrowserWindow({
       width: 220,
-      height: 50,
+      height: 80,
       x: width - 240,
       y: 20,
       frame: false,
@@ -111,9 +111,11 @@ export class App {
       },
     });
 
-    // macOS: ensure overlay appears on all desktops/spaces and above fullscreen apps
+    // Ensure overlay appears above all other windows
     if (process.platform === "darwin") {
       this.overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      this.overlayWindow.setAlwaysOnTop(true, "screen-saver");
+    } else if (process.platform === "win32") {
       this.overlayWindow.setAlwaysOnTop(true, "screen-saver");
     }
 

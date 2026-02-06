@@ -33,8 +33,10 @@ npm run dist:win     # Build Windows installer to release/
 | `auth/token-cache.ts` | Persists auth tokens |
 | `config/config-store.ts` | JSON config storage in userData |
 | `speech/speech-service.ts` | Azure Speech SDK wrapper |
-| `openai/openai-service.ts` | Transcript cleanup via Azure OpenAI |
-| `clipboard/paste-service.ts` | Clipboard management |
+| `openai/openai-service.ts` | Transcript cleanup via Azure OpenAI or OpenAI API |
+| `clipboard/paste-service.ts` | Text insertion (paste, type, or clipboard-only) |
+| `sound/sound-service.ts` | Audio feedback via renderer window |
+| `logger/logger.ts` | Logging utility |
 
 ### IPC Communication
 
@@ -54,9 +56,9 @@ Located in `App` class (`src/main/app.ts`):
 `ConfigStore` persists to `config.json` in Electron's userData. Shape defined in `src/shared/types.ts`:
 - `auth`: clientId, tenantId
 - `speech`: subscriptionKey, region, language
-- `openai`: endpoint, deploymentName, apiKey
+- `openai`: provider (azure|openai), apiKey, endpoint, deploymentName, model
 - `hotkey`: accelerator string
-- `preferences`: playAudioFeedback, restoreClipboard, startAtLogin
+- `preferences`: playAudioFeedback, startAtLogin, pasteMode, enableOpenAICleanup
 
 ## Key Patterns
 

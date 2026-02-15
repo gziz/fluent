@@ -13,6 +13,16 @@ files:
   - "!**/*.ts"
   - "!**/*.map"
 
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  entitlements: assets/entitlements.mac.plist
+  entitlementsInherit: assets/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: "My Whisper needs microphone access for speech-to-text dictation."
+
 win:
   target:
     - target: dir

@@ -25,6 +25,22 @@ export class App {
 
   private state: AppState = "idle";
 
+  /** Resolve path to a renderer HTML file, works both in dev and packaged */
+  private getRendererPath(htmlFile: string): string {
+    if (app.isPackaged) {
+      return path.join(app.getAppPath(), "src", "renderer", htmlFile);
+    }
+    return path.join(__dirname, "../../src/renderer", htmlFile);
+  }
+
+  /** Resolve path to the preload script, works both in dev and packaged */
+  private getPreloadPath(): string {
+    if (app.isPackaged) {
+      return path.join(app.getAppPath(), "dist", "preload", "preload.js");
+    }
+    return path.join(__dirname, "../preload/preload.js");
+  }
+
   constructor() {
     this.configStore = new ConfigStore();
 
@@ -107,7 +123,7 @@ export class App {
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: false,
-        preload: path.join(__dirname, "../preload/preload.js"),
+        preload: this.getPreloadPath(),
       },
     });
 
@@ -119,9 +135,7 @@ export class App {
       this.overlayWindow.setAlwaysOnTop(true, "screen-saver");
     }
 
-    this.overlayWindow.loadFile(
-      path.join(__dirname, "../../src/renderer/overlay.html")
-    );
+    this.overlayWindow.loadFile(this.getRendererPath("overlay.html"));
 
     // Prevent closing, just hide
     this.overlayWindow.on("close", (e) => {
@@ -172,13 +186,11 @@ export class App {
         nodeIntegration: true,
         contextIsolation: true,
         sandbox: false,
-        preload: path.join(__dirname, "../preload/preload.js"),
+        preload: this.getPreloadPath(),
       },
     });
 
-    this.recorderWindow.loadFile(
-      path.join(__dirname, "../../src/renderer/recorder.html")
-    );
+    this.recorderWindow.loadFile(this.getRendererPath("recorder.html"));
 
     // Wire up sound service to use this window for instant audio playback
     this.soundService.setRendererWindow(this.recorderWindow);
@@ -560,14 +572,12 @@ export class App {
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: false,
-        preload: path.join(__dirname, "../preload/preload.js"),
+        preload: this.getPreloadPath(),
       },
     });
 
     // Load settings HTML from src directory (not compiled)
-    this.settingsWindow.loadFile(
-      path.join(__dirname, "../../src/renderer/settings.html")
-    );
+    this.settingsWindow.loadFile(this.getRendererPath("settings.html"));
 
     // Open DevTools for debugging
     this.settingsWindow.webContents.openDevTools();

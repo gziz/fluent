@@ -8,7 +8,8 @@
     "dev": "tsc && electron .",
     "build": "tsc",
     "dist": "npm run build && electron-builder",
-    "dist:win": "npm run build && electron-builder --win"
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "author": "",
   "license": "MIT",

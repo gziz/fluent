@@ -19,6 +19,7 @@ const DEFAULT_CONFIG: AppConfig = {
   openai: {
     provider: "openai",
     apiKey: "",
+    baseUrl: "https://api.openai.com/v1",
     // Azure-specific
     endpoint: "",
     deploymentName: "",

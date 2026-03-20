@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(node -e:*)",
+      "Bash(npx electron --version)",
+      "Bash(/Users/gziz/Dev/toremove/my-whisper/node_modules/.bin/electron:*)",
+      "Bash(npm run dist:*)"
     ]
   }
 }

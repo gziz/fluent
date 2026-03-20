@@ -20,6 +20,7 @@ export type OpenAIProvider = "azure" | "openai";
 export interface OpenAIConfig {
   provider: OpenAIProvider;
   apiKey: string;
+  baseUrl?: string; // Base URL for API requests (default: "https://api.openai.com/v1")
   // Azure-specific
   endpoint?: string; // Azure endpoint URL
   deploymentName?: string; // Azure deployment name
@@ -95,4 +96,7 @@ export const IPC_CHANNELS = {
 
   // Sound
   SOUND_PLAY: "sound:play",
+
+  // Performance timing (preload → main)
+  PERF_TIMINGS: "perf:timings",
 } as const;

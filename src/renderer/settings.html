@@ -254,6 +254,11 @@
         <input type="text" id="openaiModel" placeholder="gpt-4.1-nano">
         <div class="help-text">e.g., gpt-4.1, gpt-4.1-nano, gpt-4.1-mini</div>
       </div>
+      <div class="field">
+        <label for="openaiBaseUrl">Base URL</label>
+        <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com/v1">
+        <div class="help-text">Custom base URL for OpenAI-compatible APIs</div>
+      </div>
     </div>
     <!-- Azure-specific fields -->
     <div id="azure-fields" style="display: none;">
@@ -330,6 +335,7 @@
         document.getElementById('openaiProvider').value = config.openai.provider || 'openai';
         document.getElementById('openaiKey').value = config.openai.apiKey || '';
         document.getElementById('openaiModel').value = config.openai.model || 'gpt-4.1-nano';
+        document.getElementById('openaiBaseUrl').value = config.openai.baseUrl || 'https://api.openai.com/v1';
         document.getElementById('endpoint').value = config.openai.endpoint || '';
         document.getElementById('deploymentName').value = config.openai.deploymentName || '';
         toggleOpenAIFields();
@@ -402,6 +408,7 @@
         await window.api.config.set('openai', {
           provider: document.getElementById('openaiProvider').value,
           apiKey: document.getElementById('openaiKey').value.trim(),
+          baseUrl: document.getElementById('openaiBaseUrl').value.trim() || 'https://api.openai.com/v1',
           model: document.getElementById('openaiModel').value.trim() || 'gpt-4.1-nano',
           endpoint: document.getElementById('endpoint').value.trim(),
           deploymentName: document.getElementById('deploymentName').value.trim(),

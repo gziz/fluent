@@ -114,8 +114,9 @@ export class OpenAIService {
     } else {
       // Standard OpenAI API
       const model = this.config.model || "gpt-4.1-nano";
+      const baseUrl = (this.config.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
       return {
-        url: "https://api.openai.com/v1/chat/completions",
+        url: `${baseUrl}/chat/completions`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${this.config.apiKey}`,

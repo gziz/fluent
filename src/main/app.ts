@@ -8,6 +8,7 @@ import { SoundService } from "./modules/sound/sound-service";
 import { TrayManager } from "./tray";
 import type { AppState } from "../shared/types";
 import { IPC_CHANNELS } from "../shared/types";
+import { perfLogger } from "./modules/logger/perf-logger";
 
 export class App {
   private configStore: ConfigStore;
@@ -317,6 +318,8 @@ export class App {
 
     try {
       const startTime = Date.now();
+      perfLogger.startSession();
+      perfLogger.markStart("recording-setup");
       this.setState("recording");
       this.registerEscapeShortcut();
       this.showOverlay("recording");
@@ -337,6 +340,7 @@ export class App {
         region: speechConfig.region,
         language: speechConfig.language,
       });
+      perfLogger.markEnd("recording-setup");
       console.log(`[App] Speech recognition started (${Date.now() - startTime}ms total)`);
     } catch (error) {
       console.error("[App] Failed to start recording:", error);
@@ -354,8 +358,9 @@ export class App {
   private async stopRecordingAndProcess(): Promise<void> {
     try {
       const stopButtonPressedTime = Date.now();
-      console.log("[App] [TIMER] Stop button pressed - starting latency measurement");
-      
+      console.log("[App] ⏱️ Stop button pressed - starting latency measurement");
+
+      perfLogger.markStart("stop-recognition");
       this.unregisterEscapeShortcut();
       this.setState("processing");
       this.showOverlay("processing");
@@ -384,6 +389,7 @@ export class App {
         }
       });
       
+      perfLogger.markEnd("stop-recognition");
       const rawTranscriptTime = Date.now();
       const stopToTranscriptLatency = rawTranscriptTime - stopButtonPressedTime;
       console.log(`[App] [TIMER] Raw transcript received in ${stopToTranscriptLatency}ms`);
@@ -406,9 +412,11 @@ export class App {
       if (enableOpenAICleanup) {
         // Clean up transcript with OpenAI
         console.log("[App] Sending transcript to OpenAI for cleanup...");
+        perfLogger.markStart("openai-cleanup");
         const openaiStartTime = Date.now();
         finalText = await this.openaiService.cleanupTranscript(transcript);
         const openaiEndTime = Date.now();
+        perfLogger.markEnd("openai-cleanup");
         openaiLatency = openaiEndTime - openaiStartTime;
         console.log(`[App] [TIMER] OpenAI cleanup completed in ${openaiLatency}ms`);
         console.log(`[App] Cleaned text: "${finalText}"`);
@@ -419,13 +427,22 @@ export class App {
 
       // Insert text (either via clipboard paste or direct typing)
       if (finalText.trim()) {
+        perfLogger.markStart("paste-text");
         const pasteStartTime = Date.now();
         await this.pasteService.insertText(finalText);
         const pasteEndTime = Date.now();
+        perfLogger.markEnd("paste-text");
         const pasteLatency = pasteEndTime - pasteStartTime;
         console.log(`[App] [TIMER] Text pasted in ${pasteLatency}ms`);
         this.showOverlay("done");
         this.soundService.play("recordingReady");
+
+        // Write perf session to file
+        perfLogger.endSession({
+          rawTranscriptLength: transcript.length,
+          cleanedTranscriptLength: finalText.length,
+          openAIEnabled: enableOpenAICleanup,
+        });
         
         // Log total latency breakdown
         const totalLatency = pasteEndTime - stopButtonPressedTime;
@@ -688,6 +705,12 @@ export class App {
         this.pendingRecognitionResolve = null;
         this.pendingRecognitionReject = null;
       }
+    });
+
+    // Perf timings from preload/renderer
+    ipcMain.on(IPC_CHANNELS.PERF_TIMINGS, (_event, timings: Record<string, number>) => {
+      console.log("[App] Received preload timing data:", timings);
+      perfLogger.setPreloadTimings(timings);
     });
 
     // Overlay IPC handler

@@ -605,11 +605,15 @@ export class App {
     }
 
     this.settingsWindow = new BrowserWindow({
-      width: 600,
-      height: 800,
+      width: 580,
+      height: 760,
       resizable: true,
       minimizable: false,
       maximizable: false,
+      titleBarStyle: "hiddenInset",
+      trafficLightPosition: { x: 14, y: 12 },
+      vibrancy: "under-window",
+      backgroundColor: "#0c0c0c",
       title: "My Whisper - Settings",
       webPreferences: {
         nodeIntegration: false,

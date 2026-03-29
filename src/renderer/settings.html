@@ -6,332 +6,527 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
   <title>My Whisper - Settings</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      --bg-base: #0c0c0c;
+      --bg-raised: #141414;
+      --bg-surface: #1a1a1a;
+      --bg-hover: #222222;
+      --bg-input: #111111;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-default: rgba(255, 255, 255, 0.1);
+      --text-primary: #f0f0f0;
+      --text-secondary: #a0a0a0;
+      --text-tertiary: #666666;
+      --text-placeholder: #4a4a4a;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --accent-muted: rgba(16, 185, 129, 0.12);
+      --accent-text: #34d399;
+      --success: #22c55e;
+      --success-bg: rgba(34, 197, 94, 0.1);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --info-bg: rgba(16, 185, 129, 0.08);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --transition-fast: 120ms ease;
+      --transition-normal: 200ms ease;
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
       font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-y: auto;
     }
-    h1 {
-      font-size: 20px;
+    .titlebar {
+      -webkit-app-region: drag;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .titlebar-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+    }
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 24px 40px;
+    }
+    .status-banner {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
       margin-bottom: 20px;
-      color: #fff;
+      animation: slideDown 200ms ease;
     }
-    h2 {
-      font-size: 14px;
-      margin: 20px 0 10px 0;
-      color: #569cd6;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .status-banner.success {
+      background: var(--success-bg);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      color: var(--success);
     }
-    .section {
-      background: #252526;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 15px;
+    .status-banner.error {
+      background: var(--error-bg);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--error);
     }
-    .field {
-      margin-bottom: 12px;
+    .status-banner.info {
+      background: var(--info-bg);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      color: var(--accent-text);
     }
-    .field:last-child {
-      margin-bottom: 0;
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    label {
-      display: block;
-      margin-bottom: 4px;
-      color: #9cdcfe;
-      font-size: 12px;
-    }
-    input[type="text"], input[type="password"], select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      font-size: 13px;
-    }
-    input[type="text"]:focus, input[type="password"]:focus, select:focus {
-      outline: none;
-      border-color: #569cd6;
-    }
-    input[type="text"]::placeholder, input[type="password"]::placeholder {
-      color: #6a6a6a;
-    }
-    .checkbox-field {
+    .config-status {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      background: var(--bg-raised);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
     }
-    .checkbox-field input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-    }
-    .checkbox-field label {
-      margin-bottom: 0;
-      color: #d4d4d4;
-      font-size: 13px;
-    }
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    button.primary {
-      background: #0e639c;
-      color: #fff;
-    }
-    button.primary:hover {
-      background: #1177bb;
-    }
-    button.secondary {
-      background: #3c3c3c;
-      color: #d4d4d4;
-    }
-    button.secondary:hover {
-      background: #4c4c4c;
-    }
-    .status {
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      font-size: 13px;
-    }
-    .status.success {
-      background: #2d4a2d;
-      color: #89d185;
-    }
-    .status.error {
-      background: #4a2d2d;
-      color: #d18585;
-    }
-    .status.info {
-      background: #2d3a4a;
-      color: #85b8d1;
-    }
-    .auth-status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .auth-dot {
+    .config-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      flex-shrink: 0;
+      transition: background var(--transition-normal);
     }
-    .auth-dot.authenticated {
-      background: #89d185;
+    .config-dot.ok { background: var(--success); box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
+    .config-dot.warn { background: var(--error); box-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+    .config-text { font-size: 13px; color: var(--text-secondary); }
+    .section { margin-bottom: 24px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 0 4px;
     }
-    .auth-dot.unauthenticated {
-      background: #d18585;
+    .section-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
     }
-    .help-text {
+    .section-title {
       font-size: 11px;
-      color: #6a6a6a;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+    }
+    .section-card {
+      background: var(--bg-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .field-row {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background var(--transition-fast);
+    }
+    .field-row:last-child { border-bottom: none; }
+    .field-row:hover { background: var(--bg-hover); }
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
       margin-top: 4px;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      outline: none;
+      margin-top: 4px;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+    input::placeholder { color: var(--text-placeholder); }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+    select option { background: var(--bg-surface); color: var(--text-primary); }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background var(--transition-fast);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-row:hover { background: var(--bg-hover); }
+    .toggle-info { flex: 1; margin-right: 16px; }
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    .toggle-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-hover);
+      border: 1px solid var(--border-default);
+      border-radius: 12px;
+      transition: background var(--transition-normal), border-color var(--transition-normal);
+      cursor: pointer;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      transition: transform var(--transition-normal), background var(--transition-normal);
+    }
+    .toggle-switch input:checked + .toggle-track {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .toggle-switch input:checked + .toggle-track::after {
+      transform: translateX(16px);
+      background: #fff;
+    }
+    .toggle-switch input:focus-visible + .toggle-track {
+      box-shadow: 0 0 0 3px var(--accent-muted);
     }
     .hotkey-recorder {
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      background: #1e1e1e;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
       cursor: pointer;
-      min-height: 38px;
-      transition: border-color 0.2s;
+      min-height: 36px;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      margin-top: 4px;
     }
-    .hotkey-recorder:hover {
-      border-color: #569cd6;
-    }
+    .hotkey-recorder:hover { border-color: var(--accent); }
     .hotkey-recorder:focus {
       outline: none;
-      border-color: #569cd6;
-      box-shadow: 0 0 0 2px rgba(86, 156, 214, 0.3);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
     }
     .hotkey-recorder.recording {
-      border-color: #ce9178;
-      box-shadow: 0 0 0 2px rgba(206, 145, 120, 0.3);
+      border-color: var(--warning);
+      box-shadow: 0 0 0 3px var(--warning-bg);
     }
-    .hotkey-keys {
-      display: flex;
-      gap: 6px;
-      flex: 1;
-    }
+    .hotkey-keys { display: flex; gap: 4px; flex: 1; }
     .hotkey-key {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 4px 10px;
-      background: #3c3c3c;
-      border: 1px solid #505050;
-      border-radius: 4px;
+      padding: 2px 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 5px;
       font-size: 12px;
       font-weight: 500;
-      color: #d4d4d4;
-      min-width: 32px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      color: var(--text-secondary);
+      min-width: 28px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.02em;
     }
-    .hotkey-placeholder {
-      color: #6a6a6a;
-      font-size: 13px;
-    }
-    .hotkey-edit-icon {
-      color: #6a6a6a;
-      font-size: 14px;
+    .hotkey-placeholder { color: var(--text-placeholder); font-size: 13px; }
+    .hotkey-edit-hint {
+      color: var(--text-tertiary);
+      font-size: 11px;
       margin-left: auto;
+      letter-spacing: 0.02em;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+      letter-spacing: -0.01em;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      flex: 1;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:focus-visible {
+      box-shadow: 0 0 0 3px var(--accent-muted);
+      outline: none;
+    }
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
+    .btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .btn-secondary:focus-visible {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+      outline: none;
+    }
+    .btn-saved { background: var(--success) !important; color: #fff !important; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Settings</h1>
-
-  <div id="message" class="status info" style="display: none;"></div>
-
-  <h2>Configuration Status</h2>
-  <div class="section">
-    <div class="auth-status">
-      <span id="auth-dot" class="auth-dot unauthenticated"></span>
-      <span id="auth-text">Not configured</span>
-    </div>
-    <div class="help-text" style="margin-top: 10px;">
-      Enter your Azure API keys below to enable the app.
-    </div>
+  <div class="titlebar">
+    <span class="titlebar-text">Settings</span>
   </div>
 
-  <h2>Azure Speech Service</h2>
-  <div class="section">
-    <div class="field">
-      <label for="speechKey">API Key</label>
-      <input type="password" id="speechKey" placeholder="Enter your Speech service key">
-      <div class="help-text">From Azure Portal > Speech resource > Keys and Endpoint > Key 1 or Key 2</div>
-    </div>
-    <div class="field">
-      <label for="region">Region</label>
-      <input type="text" id="region" placeholder="eastus">
-      <div class="help-text">e.g., eastus, westus2, westeurope</div>
-    </div>
-    <div class="field">
-      <label for="language">Language</label>
-      <input type="text" id="language" placeholder="en-US">
-      <div class="help-text">Speech recognition language code</div>
-    </div>
-  </div>
+  <div class="container">
+    <div id="message" class="status-banner"></div>
 
-  <h2>OpenAI (Transcript Cleanup)</h2>
-  <div class="section">
-    <div class="field">
-      <label for="openaiProvider">Provider</label>
-      <select id="openaiProvider" onchange="toggleOpenAIFields()">
-        <option value="openai">OpenAI</option>
-        <option value="azure">Azure OpenAI</option>
-      </select>
-      <div class="help-text">Choose between standard OpenAI or Azure OpenAI</div>
+    <div class="config-status">
+      <span id="auth-dot" class="config-dot warn"></span>
+      <span id="auth-text" class="config-text">Checking configuration…</span>
     </div>
-    <div class="field">
-      <label for="openaiKey">API Key</label>
-      <input type="password" id="openaiKey" placeholder="Enter your API key">
-      <div id="openaiKeyHelp" class="help-text">From OpenAI platform > API Keys</div>
-    </div>
-    <!-- OpenAI-specific fields -->
-    <div id="openai-fields">
-      <div class="field">
-        <label for="openaiModel">Model</label>
-        <input type="text" id="openaiModel" placeholder="gpt-4.1-nano">
-        <div class="help-text">e.g., gpt-4.1, gpt-4.1-nano, gpt-4.1-mini</div>
-      </div>
-      <div class="field">
-        <label for="openaiBaseUrl">Base URL</label>
-        <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com/v1">
-        <div class="help-text">Custom base URL for OpenAI-compatible APIs</div>
-      </div>
-    </div>
-    <!-- Azure-specific fields -->
-    <div id="azure-fields" style="display: none;">
-      <div class="field">
-        <label for="endpoint">Endpoint</label>
-        <input type="text" id="endpoint" placeholder="https://your-resource.openai.azure.com">
-        <div class="help-text">From Azure Portal > OpenAI resource > Keys and Endpoint</div>
-      </div>
-      <div class="field">
-        <label for="deploymentName">Deployment Name</label>
-        <input type="text" id="deploymentName" placeholder="gpt-4.1-nano">
-        <div class="help-text">The name of your deployed model</div>
-      </div>
-    </div>
-  </div>
 
-  <h2>Hotkey</h2>
-  <div class="section">
-    <div class="field">
-      <label>Press to start/stop dictation</label>
-      <div id="hotkey-recorder" class="hotkey-recorder" tabindex="0">
-        <div id="hotkey-keys" class="hotkey-keys"></div>
-        <span id="hotkey-placeholder" class="hotkey-placeholder" style="display: none;">Press keys...</span>
-        <span class="hotkey-edit-icon">&#9998;</span>
+    <!-- Speech Service -->
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 1v10M8 1C6.343 1 5 2.567 5 4.5v3C5 9.433 6.343 11 8 11s3-1.567 3-3.5v-3C11 2.567 9.657 1 8 1z"/>
+          <path d="M3 7.5a5 5 0 0010 0M8 14v1"/>
+        </svg>
+        <span class="section-title">Speech Service</span>
       </div>
-      <input type="hidden" id="accelerator">
-      <div class="help-text">Click to record a new hotkey combination</div>
-    </div>
-  </div>
-
-  <h2>Preferences</h2>
-  <div class="section">
-    <div class="field checkbox-field">
-      <input type="checkbox" id="startAtLogin">
-      <label for="startAtLogin">Start at login</label>
-    </div>
-    <div class="field checkbox-field">
-      <input type="checkbox" id="enableOpenAICleanup" checked>
-      <label for="enableOpenAICleanup">Clean up transcript with OpenAI</label>
-    </div>
-    <div class="help-text" style="margin-left: 24px; margin-bottom: 12px;">
-      When enabled, uses OpenAI to fix punctuation, grammar, and formatting. Disable for faster, raw transcription.
-    </div>
-    <div class="field">
-      <label for="pasteMode">Paste mode</label>
-      <select id="pasteMode">
-        <option value="paste">Paste with Ctrl+V / Cmd+V</option>
-        <option value="type">Type character by character</option>
-        <option value="clipboard">Copy to clipboard only (don't paste)</option>
-      </select>
-      <div class="help-text">
-        All modes copy the transcription to clipboard. "Paste" is fastest. "Type" simulates keyboard input (slower). "Clipboard only" lets you paste manually.
+      <div class="section-card">
+        <div class="field-row">
+          <label class="field-label" for="speechKey">API Key</label>
+          <input type="password" id="speechKey" placeholder="Enter your Azure Speech key">
+          <div class="field-hint">Azure Portal &#x2192; Speech resource &#x2192; Keys and Endpoint</div>
+        </div>
+        <div class="field-row">
+          <label class="field-label" for="region">Region</label>
+          <input type="text" id="region" placeholder="eastus">
+          <div class="field-hint">e.g., eastus, westus2, westeurope</div>
+        </div>
+        <div class="field-row">
+          <label class="field-label" for="language">Language</label>
+          <input type="text" id="language" placeholder="en-US">
+          <div class="field-hint">Speech recognition language code</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="buttons">
-    <button id="save-btn" class="primary">Save</button>
-    <button id="close-btn" class="secondary">Close</button>
+    <!-- OpenAI -->
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="3"/>
+          <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/>
+        </svg>
+        <span class="section-title">OpenAI &#x2014; Transcript Cleanup</span>
+      </div>
+      <div class="section-card">
+        <div class="field-row">
+          <label class="field-label" for="openaiProvider">Provider</label>
+          <select id="openaiProvider" onchange="toggleOpenAIFields()">
+            <option value="openai">OpenAI</option>
+            <option value="azure">Azure OpenAI</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label class="field-label" for="openaiKey">API Key</label>
+          <input type="password" id="openaiKey" placeholder="Enter your API key">
+          <div id="openaiKeyHelp" class="field-hint">OpenAI platform &#x2192; API Keys</div>
+        </div>
+        <div id="openai-fields">
+          <div class="field-row">
+            <label class="field-label" for="openaiModel">Model</label>
+            <input type="text" id="openaiModel" placeholder="gpt-4.1-nano">
+            <div class="field-hint">e.g., gpt-4.1, gpt-4.1-nano, gpt-4.1-mini</div>
+          </div>
+          <div class="field-row">
+            <label class="field-label" for="openaiBaseUrl">Base URL</label>
+            <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com/v1">
+            <div class="field-hint">Custom base URL for OpenAI-compatible APIs</div>
+          </div>
+        </div>
+        <div id="azure-fields" style="display: none;">
+          <div class="field-row">
+            <label class="field-label" for="endpoint">Endpoint</label>
+            <input type="text" id="endpoint" placeholder="https://your-resource.openai.azure.com">
+            <div class="field-hint">Azure Portal &#x2192; OpenAI resource &#x2192; Keys and Endpoint</div>
+          </div>
+          <div class="field-row">
+            <label class="field-label" for="deploymentName">Deployment Name</label>
+            <input type="text" id="deploymentName" placeholder="gpt-4.1-nano">
+            <div class="field-hint">The name of your deployed model</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hotkey -->
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="14" height="9" rx="2"/>
+          <path d="M4 8h1M7 8h2M11 8h1M5 10.5h6"/>
+        </svg>
+        <span class="section-title">Hotkey</span>
+      </div>
+      <div class="section-card">
+        <div class="field-row">
+          <label class="field-label">Press to start / stop dictation</label>
+          <div id="hotkey-recorder" class="hotkey-recorder" tabindex="0">
+            <div id="hotkey-keys" class="hotkey-keys"></div>
+            <span id="hotkey-placeholder" class="hotkey-placeholder" style="display: none;">Press keys&#x2026;</span>
+            <span class="hotkey-edit-hint">Click to change</span>
+          </div>
+          <input type="hidden" id="accelerator">
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M8 5v3l2 1"/>
+        </svg>
+        <span class="section-title">Preferences</span>
+      </div>
+      <div class="section-card">
+        <div class="toggle-row" onclick="document.getElementById('startAtLogin').click()">
+          <div class="toggle-info">
+            <div class="toggle-label">Start at login</div>
+            <div class="toggle-desc">Launch My Whisper when you log in</div>
+          </div>
+          <label class="toggle-switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="startAtLogin">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row" onclick="document.getElementById('enableOpenAICleanup').click()">
+          <div class="toggle-info">
+            <div class="toggle-label">Clean up with OpenAI</div>
+            <div class="toggle-desc">Fix punctuation, grammar, and formatting. Disable for faster raw transcription.</div>
+          </div>
+          <label class="toggle-switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enableOpenAICleanup" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field-label" for="pasteMode">Paste mode</label>
+          <select id="pasteMode">
+            <option value="paste">Paste (&#x2318;V) &#x2014; fastest</option>
+            <option value="type">Type character by character</option>
+            <option value="clipboard">Copy to clipboard only</option>
+          </select>
+          <div class="field-hint">All modes copy to clipboard. &#x201C;Paste&#x201D; is fastest. &#x201C;Type&#x201D; simulates keyboard input.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="save-btn" class="btn btn-primary">Save Changes</button>
+      <button id="close-btn" class="btn btn-secondary">Close</button>
+    </div>
   </div>
 
   <script>
-    // Load current config
     async function loadConfig() {
       try {
         const config = await window.api.config.getAll();
-
-        // Speech config
         document.getElementById('speechKey').value = config.speech.subscriptionKey || '';
         document.getElementById('region').value = config.speech.region || 'eastus';
         document.getElementById('language').value = config.speech.language || 'en-US';
-
-        // OpenAI config
         document.getElementById('openaiProvider').value = config.openai.provider || 'openai';
         document.getElementById('openaiKey').value = config.openai.apiKey || '';
         document.getElementById('openaiModel').value = config.openai.model || 'gpt-4.1-nano';
@@ -339,48 +534,38 @@
         document.getElementById('endpoint').value = config.openai.endpoint || '';
         document.getElementById('deploymentName').value = config.openai.deploymentName || '';
         toggleOpenAIFields();
-
-        // Other settings
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
         updateHotkeyDisplay();
         document.getElementById('startAtLogin').checked = config.preferences.startAtLogin === true;
-        // Handle pasteMode - support legacy useDirectTyping for backwards compatibility
         let pasteMode = config.preferences.pasteMode || 'paste';
         if (!config.preferences.pasteMode && config.preferences.useDirectTyping) {
           pasteMode = 'type';
         }
         document.getElementById('pasteMode').value = pasteMode;
         document.getElementById('enableOpenAICleanup').checked = config.preferences.enableOpenAICleanup !== false;
-
-        // Update configuration status
         updateConfigStatus();
       } catch (error) {
         showMessage('Failed to load config: ' + error.message, 'error');
       }
     }
 
-    // Update configuration status display
     function updateConfigStatus() {
       const dot = document.getElementById('auth-dot');
       const text = document.getElementById('auth-text');
-
       const speechKey = document.getElementById('speechKey').value.trim();
       const region = document.getElementById('region').value.trim();
       const openaiKey = document.getElementById('openaiKey').value.trim();
       const openaiProvider = document.getElementById('openaiProvider').value;
       const endpoint = document.getElementById('endpoint').value.trim();
-
-      // For Azure, we need endpoint; for OpenAI, we just need the API key
-      const openaiConfigured = openaiProvider === 'azure' 
-        ? (openaiKey && endpoint) 
+      const openaiConfigured = openaiProvider === 'azure'
+        ? (openaiKey && endpoint)
         : openaiKey;
       const isConfigured = speechKey && region && openaiConfigured;
-
       if (isConfigured) {
-        dot.className = 'auth-dot authenticated';
-        text.textContent = 'API keys configured';
+        dot.className = 'config-dot ok';
+        text.textContent = 'All services configured';
       } else {
-        dot.className = 'auth-dot unauthenticated';
+        dot.className = 'config-dot warn';
         const missing = [];
         if (!speechKey) missing.push('Speech API key');
         if (!region) missing.push('Region');
@@ -390,21 +575,14 @@
       }
     }
 
-    // Save config
     async function saveConfig() {
       try {
-        // Auth config kept for future browser-based auth
-        await window.api.config.set('auth', {
-          clientId: '',
-          tenantId: '',
-        });
-
+        await window.api.config.set('auth', { clientId: '', tenantId: '' });
         await window.api.config.set('speech', {
           subscriptionKey: document.getElementById('speechKey').value.trim(),
           region: document.getElementById('region').value.trim() || 'eastus',
           language: document.getElementById('language').value.trim() || 'en-US',
         });
-
         await window.api.config.set('openai', {
           provider: document.getElementById('openaiProvider').value,
           apiKey: document.getElementById('openaiKey').value.trim(),
@@ -413,82 +591,60 @@
           endpoint: document.getElementById('endpoint').value.trim(),
           deploymentName: document.getElementById('deploymentName').value.trim(),
         });
-
         await window.api.config.set('hotkey', {
           accelerator: document.getElementById('accelerator').value.trim() || 'Ctrl+Shift+Space',
         });
-
         await window.api.config.set('preferences', {
           playAudioFeedback: true,
           startAtLogin: document.getElementById('startAtLogin').checked,
           pasteMode: document.getElementById('pasteMode').value,
           enableOpenAICleanup: document.getElementById('enableOpenAICleanup').checked,
         });
-
         updateConfigStatus();
         showMessage('Settings saved successfully!', 'success');
-
-        // Visual feedback on button
         const btn = document.getElementById('save-btn');
-        const originalText = btn.textContent;
-        btn.textContent = 'Saved!';
-        btn.style.background = '#2d4a2d';
+        btn.classList.add('btn-saved');
+        btn.textContent = '\u2713 Saved';
         setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.background = '';
+          btn.classList.remove('btn-saved');
+          btn.textContent = 'Save Changes';
         }, 1500);
       } catch (error) {
         showMessage('Failed to save: ' + error.message, 'error');
       }
     }
 
-    // Show message
     function showMessage(text, type) {
       const el = document.getElementById('message');
-      if (!text) {
-        el.style.display = 'none';
-        return;
-      }
+      if (!text) { el.style.display = 'none'; return; }
       el.textContent = text;
-      el.className = 'status ' + type;
-      el.style.display = 'block';
-
-      // Scroll to top so message is visible
+      el.className = 'status-banner ' + type;
+      el.style.display = 'flex';
       window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Auto-hide success messages after 3 seconds
       if (type === 'success') {
-        setTimeout(() => {
-          el.style.display = 'none';
-        }, 3000);
+        setTimeout(() => { el.style.display = 'none'; }, 3000);
       }
     }
 
-    // Close window
-    function closeWindow() {
-      window.close();
-    }
+    function closeWindow() { window.close(); }
 
-    // Toggle OpenAI fields based on provider selection
     function toggleOpenAIFields() {
       const provider = document.getElementById('openaiProvider').value;
       const openaiFields = document.getElementById('openai-fields');
       const azureFields = document.getElementById('azure-fields');
       const keyHelp = document.getElementById('openaiKeyHelp');
-
       if (provider === 'azure') {
         openaiFields.style.display = 'none';
         azureFields.style.display = 'block';
-        keyHelp.textContent = 'From Azure Portal > OpenAI resource > Keys and Endpoint';
+        keyHelp.textContent = 'Azure Portal \u2192 OpenAI resource \u2192 Keys and Endpoint';
       } else {
         openaiFields.style.display = 'block';
         azureFields.style.display = 'none';
-        keyHelp.textContent = 'From OpenAI platform > API Keys';
+        keyHelp.textContent = 'OpenAI platform \u2192 API Keys';
       }
       updateConfigStatus();
     }
 
-    // Hotkey recorder
     const hotkeyRecorder = document.getElementById('hotkey-recorder');
     const hotkeyKeys = document.getElementById('hotkey-keys');
     const hotkeyPlaceholder = document.getElementById('hotkey-placeholder');
@@ -497,29 +653,26 @@
     let pendingAccelerator = '';
     let pendingIsComplete = false;
 
-    // Convert accelerator string to display keys
     function parseAccelerator(accelerator) {
       if (!accelerator) return [];
       return accelerator.split('+').map(key => {
-        // Normalize key names for display
         const displayMap = {
-          'CommandOrControl': navigator.platform.includes('Mac') ? '⌘' : 'Ctrl',
-          'CmdOrCtrl': navigator.platform.includes('Mac') ? '⌘' : 'Ctrl',
-          'Command': '⌘',
-          'Cmd': '⌘',
+          'CommandOrControl': navigator.platform.includes('Mac') ? '\u2318' : 'Ctrl',
+          'CmdOrCtrl': navigator.platform.includes('Mac') ? '\u2318' : 'Ctrl',
+          'Command': '\u2318',
+          'Cmd': '\u2318',
           'Control': 'Ctrl',
-          'Shift': '⇧ Shift',
-          'Alt': navigator.platform.includes('Mac') ? '⌥ Option' : 'Alt',
-          'Option': '⌥ Option',
-          'Meta': '⌘',
-          'Super': '⌘',
+          'Shift': '\u21E7',
+          'Alt': navigator.platform.includes('Mac') ? '\u2325' : 'Alt',
+          'Option': '\u2325',
+          'Meta': '\u2318',
+          'Super': '\u2318',
           ' ': 'Space',
         };
         return displayMap[key] || key;
       });
     }
 
-    // Render key badges
     function renderHotkeyKeys(keys) {
       hotkeyKeys.innerHTML = '';
       keys.forEach(key => {
@@ -530,7 +683,6 @@
       });
     }
 
-    // Update display from accelerator value
     function updateHotkeyDisplay() {
       const accelerator = acceleratorInput.value || 'Ctrl+Shift+Space';
       const keys = parseAccelerator(accelerator);
@@ -538,7 +690,6 @@
       hotkeyPlaceholder.style.display = 'none';
     }
 
-    // Enter recording mode
     function startRecording() {
       isRecording = true;
       pendingAccelerator = '';
@@ -548,35 +699,25 @@
       hotkeyPlaceholder.style.display = 'inline';
     }
 
-    // Exit recording mode
     function stopRecording() {
       isRecording = false;
       hotkeyRecorder.classList.remove('recording');
       hotkeyPlaceholder.style.display = 'none';
-      // Only save if we have a complete combination (modifier + non-modifier key)
       if (pendingAccelerator && pendingIsComplete) {
         acceleratorInput.value = pendingAccelerator;
       }
-      // Always refresh display from current value
       updateHotkeyDisplay();
     }
 
-    // Convert key event to Electron accelerator format
     function keyEventToAccelerator(e) {
       const parts = [];
-
-      // Modifiers (in Electron order)
       if (e.ctrlKey) parts.push('Ctrl');
       if (e.altKey) parts.push('Alt');
       if (e.shiftKey) parts.push('Shift');
       if (e.metaKey) parts.push('Command');
-
-      // Main key (skip if only modifier)
       const key = e.key;
       const isModifierOnly = ['Control', 'Alt', 'Shift', 'Meta'].includes(key);
-
       if (!isModifierOnly) {
-        // Normalize key names
         let normalizedKey = key;
         if (key === ' ') normalizedKey = 'Space';
         else if (key.length === 1) normalizedKey = key.toUpperCase();
@@ -589,41 +730,28 @@
         else if (key === 'Backspace') normalizedKey = 'Backspace';
         else if (key === 'Delete') normalizedKey = 'Delete';
         else if (key === 'Tab') normalizedKey = 'Tab';
-
         parts.push(normalizedKey);
       }
-
       return { accelerator: parts.join('+'), isComplete: !isModifierOnly && parts.length > 0 };
     }
 
-    // Handle keydown in recording mode
     hotkeyRecorder.addEventListener('keydown', (e) => {
       if (!isRecording) return;
-
       e.preventDefault();
       e.stopPropagation();
-
-      // Escape cancels recording without saving
       if (e.key === 'Escape') {
         pendingAccelerator = '';
         stopRecording();
         hotkeyRecorder.blur();
         return;
       }
-
       const { accelerator, isComplete } = keyEventToAccelerator(e);
-
       if (accelerator) {
-        // Track the pending accelerator and whether it's complete
         pendingAccelerator = accelerator;
         pendingIsComplete = isComplete;
-
-        // Show keys as they're pressed
         const keys = parseAccelerator(accelerator);
         renderHotkeyKeys(keys);
         hotkeyPlaceholder.style.display = 'none';
-
-        // If we have a complete combination (modifier + key), finalize immediately
         if (isComplete) {
           stopRecording();
           hotkeyRecorder.blur();
@@ -631,7 +759,6 @@
       }
     });
 
-    // Click to start recording
     hotkeyRecorder.addEventListener('click', () => {
       if (!isRecording) {
         startRecording();
@@ -639,23 +766,17 @@
       }
     });
 
-    // Blur to cancel recording
     hotkeyRecorder.addEventListener('blur', () => {
-      if (isRecording) {
-        stopRecording();
-      }
+      if (isRecording) stopRecording();
     });
 
-    // Event listeners
     document.getElementById('save-btn').addEventListener('click', saveConfig);
     document.getElementById('close-btn').addEventListener('click', closeWindow);
 
-    // Update status when fields change
     ['speechKey', 'region', 'openaiKey', 'endpoint'].forEach(id => {
       document.getElementById(id).addEventListener('input', updateConfigStatus);
     });
 
-    // Load config on page load
     loadConfig();
   </script>
 </body>

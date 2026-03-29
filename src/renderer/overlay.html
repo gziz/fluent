@@ -5,93 +5,171 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
   <title>My Whisper</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       background: transparent;
       overflow: hidden;
       -webkit-app-region: drag;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
+
     .bubble {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 12px 18px;
-      border-radius: 30px;
-      background: rgba(30, 30, 30, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #fff;
-      font-size: 14px;
-      backdrop-filter: blur(10px);
+      padding: 10px 16px;
+      border-radius: 24px;
+      background: rgba(12, 12, 12, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      color: #f0f0f0;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      animation: fadeIn 200ms ease-out;
     }
-    .indicator {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .indicator-wrap {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
-    .indicator.recording {
+
+    .waveform {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      height: 16px;
+    }
+    .waveform.active { display: flex; }
+    .waveform-bar {
+      width: 2.5px;
+      border-radius: 2px;
       background: #ef4444;
-      animation: pulse 1s ease-in-out infinite;
+      animation: wave 1s ease-in-out infinite;
     }
-    .indicator.processing {
-      background: #f59e0b;
-      animation: spin 1s linear infinite;
+    .waveform-bar:nth-child(1) { height: 6px; animation-delay: 0ms; }
+    .waveform-bar:nth-child(2) { height: 10px; animation-delay: 120ms; }
+    .waveform-bar:nth-child(3) { height: 14px; animation-delay: 240ms; }
+    .waveform-bar:nth-child(4) { height: 10px; animation-delay: 360ms; }
+    .waveform-bar:nth-child(5) { height: 6px; animation-delay: 480ms; }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1); }
     }
-    .indicator.done {
-      background: #22c55e;
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(245, 158, 11, 0.2);
+      border-top-color: #f59e0b;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.9); }
-    }
+    .spinner.active { display: block; }
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
+
+    .checkmark {
+      display: none;
+      width: 16px;
+      height: 16px;
+      color: #10b981;
+    }
+    .checkmark.active { display: block; }
+
     .text {
       white-space: nowrap;
+      line-height: 1;
     }
+
     .partial {
-      max-width: 300px;
+      max-width: 280px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: #a1a1aa;
-      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 11px;
+      font-weight: 400;
+      margin-left: -2px;
+      letter-spacing: 0.01em;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
   <div class="bubble">
-    <div id="indicator" class="indicator recording"></div>
-    <span id="text" class="text">Listening...</span>
+    <div class="indicator-wrap">
+      <div id="waveform" class="waveform active">
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+      </div>
+      <div id="spinner" class="spinner"></div>
+      <svg id="checkmark" class="checkmark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.5 8.5L6.5 11.5L12.5 4.5"/>
+      </svg>
+    </div>
+    <span id="text" class="text">Listening…</span>
   </div>
   <div id="partial" class="partial" style="display: none;"></div>
 
   <script>
-    const indicator = document.getElementById('indicator');
+    const waveform = document.getElementById('waveform');
+    const spinner = document.getElementById('spinner');
+    const checkmark = document.getElementById('checkmark');
     const text = document.getElementById('text');
     const partial = document.getElementById('partial');
 
+    function hideAll() {
+      waveform.classList.remove('active');
+      spinner.classList.remove('active');
+      checkmark.classList.remove('active');
+    }
+
     window.api.overlay.onStateChange((state, partialText) => {
-      indicator.className = 'indicator ' + state;
-      
+      hideAll();
+
       switch (state) {
         case 'recording':
-          text.textContent = 'Listening...';
+          waveform.classList.add('active');
+          text.textContent = 'Listening\u2026';
           break;
         case 'processing':
-          text.textContent = 'Processing...';
+          spinner.classList.add('active');
+          text.textContent = 'Processing\u2026';
           break;
         case 'done':
-          text.textContent = 'Ready to paste!';
-          // Auto-hide after 2 seconds
+          checkmark.classList.add('active');
+          text.textContent = 'Done';
           setTimeout(() => {
             window.api.overlay.hide();
           }, 2000);

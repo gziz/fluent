@@ -167,6 +167,12 @@ contextBridge.exposeInMainWorld("api", {
     },
     hide: () => ipcRenderer.send(IPC_CHANNELS.OVERLAY_HIDE),
   },
+  transcripts: {
+    getAll: () => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTS_GET_ALL),
+    getRecent: (count: number) => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTS_GET_RECENT, count),
+    clear: () => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTS_CLEAR),
+    getPath: () => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTS_GET_PATH),
+  },
 });
 
 // Type declaration for the exposed API
@@ -206,6 +212,30 @@ declare global {
       overlay: {
         onStateChange: (callback: (state: string, partialText?: string) => void) => void;
         hide: () => void;
+      };
+      transcripts: {
+        getAll: () => Promise<Array<{
+          id: string;
+          timestamp: string;
+          rawTranscript: string;
+          cleanedTranscript: string;
+          openAICleanupApplied: boolean;
+          cleanupModel: string | null;
+          language: string;
+          recordingDurationMs: number;
+        }>>;
+        getRecent: (count: number) => Promise<Array<{
+          id: string;
+          timestamp: string;
+          rawTranscript: string;
+          cleanedTranscript: string;
+          openAICleanupApplied: boolean;
+          cleanupModel: string | null;
+          language: string;
+          recordingDurationMs: number;
+        }>>;
+        clear: () => Promise<boolean>;
+        getPath: () => Promise<string>;
       };
     };
   }

@@ -99,4 +99,10 @@ export const IPC_CHANNELS = {
 
   // Performance timing (preload → main)
   PERF_TIMINGS: "perf:timings",
+
+  // Transcripts
+  TRANSCRIPTS_GET_ALL: "transcripts:get-all",
+  TRANSCRIPTS_GET_RECENT: "transcripts:get-recent",
+  TRANSCRIPTS_CLEAR: "transcripts:clear",
+  TRANSCRIPTS_GET_PATH: "transcripts:get-path",
 } as const;

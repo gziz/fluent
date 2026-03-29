@@ -1,0 +1,68 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Build Commands
+
+```bash
+npm install          # Install dependencies
+npm run build        # Compile TypeScript to dist/
+npm run dev          # Build and run Electron app
+npm start            # Build and run (same as dev)
+npm run dist:win     # Build Windows installer to release/
+```
+
+## Architecture
+
+**My Whisper** is an Electron desktop app for voice-to-text dictation using Azure Speech SDK and Azure OpenAI.
+
+### Process Model
+
+- **Main process** (`src/main/`): Orchestrates the app via `App` class in `app.ts`
+- **Renderer processes** (`src/renderer/`): HTML files loaded by BrowserWindow
+  - `recorder.html` - Hidden window for Web Audio API / Speech SDK
+  - `settings.html` - Configuration UI
+  - `overlay.html` - Recording status bubble
+- **Preload** (`src/preload/preload.ts`): Exposes IPC bridge to renderer
+
+### Main Process Modules (`src/main/modules/`)
+
+| Module | Purpose |
+|--------|---------|
+| `auth/auth-service.ts` | Microsoft Entra ID authentication via MSAL |
+| `auth/token-cache.ts` | Persists auth tokens |
+| `config/config-store.ts` | JSON config storage in userData |
+| `speech/speech-service.ts` | Azure Speech SDK wrapper |
+| `openai/openai-service.ts` | Transcript cleanup via Azure OpenAI or OpenAI API |
+| `clipboard/paste-service.ts` | Text insertion (paste, type, or clipboard-only) |
+| `sound/sound-service.ts` | Audio feedback via renderer window |
+| `logger/logger.ts` | Logging utility |
+
+### IPC Communication
+
+All IPC channels are defined in `src/shared/types.ts` under `IPC_CHANNELS`. Main patterns:
+- `ipcMain.handle()` for request/response (config, auth)
+- `ipcMain.on()` + `webContents.send()` for events (speech recognition flow)
+
+### App State Machine
+
+Located in `App` class (`src/main/app.ts`):
+- `idle` → (hotkey) → `recording` → (hotkey) → `processing` → `idle`
+- ESC cancels recording and returns to idle
+- Global shortcut: `Ctrl+Shift+Space` (configurable)
+
+### Configuration
+
+`ConfigStore` persists to `config.json` in Electron's userData. Shape defined in `src/shared/types.ts`:
+- `auth`: clientId, tenantId
+- `speech`: subscriptionKey, region, language
+- `openai`: provider (azure|openai), apiKey, endpoint, deploymentName, model
+- `hotkey`: accelerator string
+- `preferences`: playAudioFeedback, startAtLogin, pasteMode, enableOpenAICleanup
+
+## Key Patterns
+
+- Speech SDK requires browser globals polyfilled in `index.ts` before import
+- Recorder window stays hidden - uses Web Audio API unavailable in main process
+- Overlay window uses `showInactive()` to avoid stealing focus
+- Single instance lock prevents multiple app instances

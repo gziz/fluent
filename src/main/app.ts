@@ -9,6 +9,7 @@ import { TrayManager } from "./tray";
 import type { AppState } from "../shared/types";
 import { IPC_CHANNELS } from "../shared/types";
 import { perfLogger } from "./modules/logger/perf-logger";
+import { transcriptStore } from "./modules/transcripts/transcript-store";
 
 export class App {
   private configStore: ConfigStore;
@@ -23,6 +24,7 @@ export class App {
   private recorderReady = false;
   private pendingRecognitionResolve: ((text: string) => void) | null = null;
   private pendingRecognitionReject: ((error: Error) => void) | null = null;
+  private recordingStartedAt = 0;
 
   private state: AppState = "idle";
 
@@ -318,6 +320,7 @@ export class App {
 
     try {
       const startTime = Date.now();
+      this.recordingStartedAt = startTime;
       perfLogger.startSession();
       perfLogger.markStart("recording-setup");
       this.setState("recording");
@@ -436,6 +439,29 @@ export class App {
         console.log(`[App] [TIMER] Text pasted in ${pasteLatency}ms`);
         this.showOverlay("done");
         this.soundService.play("recordingReady");
+
+        // Save transcript locally
+        const speechConfig = this.configStore.get("speech");
+        const openaiConfig = this.configStore.get("openai");
+        let cleanupModel: string | null = null;
+        if (enableOpenAICleanup) {
+          if (openaiConfig.provider === "azure") {
+            cleanupModel = `Azure OpenAI / ${openaiConfig.deploymentName || "unknown"}`;
+          } else {
+            const baseUrl = (openaiConfig.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
+            const model = openaiConfig.model || "gpt-4.1-nano";
+            cleanupModel = `${baseUrl} / ${model}`;
+          }
+        }
+        const recordingDurationMs = stopButtonPressedTime - this.recordingStartedAt;
+        transcriptStore.save({
+          rawTranscript: transcript,
+          cleanedTranscript: finalText,
+          openAICleanupApplied: enableOpenAICleanup,
+          cleanupModel,
+          language: speechConfig.language || "en-US",
+          recordingDurationMs,
+        });
 
         // Write perf session to file
         perfLogger.endSession({
@@ -717,6 +743,24 @@ export class App {
     ipcMain.on(IPC_CHANNELS.OVERLAY_HIDE, () => {
       console.log("[App] Overlay hide requested from renderer");
       this.hideOverlay();
+    });
+
+    // Transcript IPC handlers
+    ipcMain.handle(IPC_CHANNELS.TRANSCRIPTS_GET_ALL, () => {
+      return transcriptStore.getAll();
+    });
+
+    ipcMain.handle(IPC_CHANNELS.TRANSCRIPTS_GET_RECENT, (_event, count: number) => {
+      return transcriptStore.getRecent(count);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.TRANSCRIPTS_CLEAR, () => {
+      transcriptStore.clear();
+      return true;
+    });
+
+    ipcMain.handle(IPC_CHANNELS.TRANSCRIPTS_GET_PATH, () => {
+      return transcriptStore.getStorePath();
     });
   }
 

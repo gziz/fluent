@@ -1,6 +1,7 @@
 import { app } from "electron";
 import { App } from "./app";
 import { perfLogger } from "./modules/logger/perf-logger";
+import { transcriptStore } from "./modules/transcripts/transcript-store";
 
 // Polyfill for Microsoft Speech SDK which expects browser globals
 // Must be set before importing the SDK
@@ -35,6 +36,7 @@ if (!gotTheLock) {
   // Initialize app when Electron is ready
   app.whenReady().then(async () => {
     perfLogger.init();
+    transcriptStore.init();
     application = new App();
     await application.initialize();
     console.log("My Whisper is ready");

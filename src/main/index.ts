@@ -39,11 +39,11 @@ if (!gotTheLock) {
     transcriptStore.init();
     application = new App();
     await application.initialize();
-    console.log("My Whisper is ready");
+    console.log("Fluent is ready");
   });
 
   // Clean up on quit
   app.on("will-quit", () => {
-    console.log("My Whisper shutting down");
+    console.log("Fluent shutting down");
   });
 }

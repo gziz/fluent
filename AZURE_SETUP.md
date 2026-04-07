@@ -1,4 +1,4 @@
-# Azure Configuration for My Whisper
+# Azure Configuration for Fluent
 
 ## Quick Start
 
@@ -35,11 +35,11 @@
 | gpt-5-mini | gpt-5-mini |
 | gpt-5 | gpt-5 |
 
-**Recommended for My Whisper:** `gpt-4.1-mini` (fast and cost-effective for text cleanup)
+**Recommended for Fluent:** `gpt-4.1-mini` (fast and cost-effective for text cleanup)
 
 ---
 
-## Settings to Enter in My Whisper App
+## Settings to Enter in Fluent App
 
 Copy these values into the Settings window:
 

@@ -14,7 +14,7 @@ npm run dist:win     # Build Windows installer to release/
 
 ## Architecture
 
-**My Whisper** is an Electron desktop app for voice-to-text dictation using Azure Speech SDK and Azure OpenAI.
+**Fluent** is an Electron desktop app for voice-to-text dictation using Azure Speech SDK and Azure OpenAI.
 
 ### Process Model
 

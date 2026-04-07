@@ -578,7 +578,7 @@ export class App {
     dialog.showMessageBox({
       type: "info",
       title: "Configuration Required",
-      message: "My Whisper needs to be configured before use.",
+      message: "Fluent needs to be configured before use.",
       detail:
         "Please configure your Azure API keys:\n\n" +
         "1. Speech Service API Key\n" +
@@ -614,7 +614,7 @@ export class App {
       trafficLightPosition: { x: 14, y: 12 },
       vibrancy: "under-window",
       backgroundColor: "#0c0c0c",
-      title: "My Whisper - Settings",
+      title: "Fluent - Settings",
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,

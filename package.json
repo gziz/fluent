@@ -1,5 +1,5 @@
 {
-  "name": "my-whisper",
+  "name": "fluent",
   "version": "1.0.0",
   "description": "Voice-to-text dictation with Azure Speech and OpenAI",
   "main": "dist/main/index.js",

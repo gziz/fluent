@@ -1,4 +1,4 @@
-# My Whisper
+# Fluent
 
 A Windows desktop app for voice-to-text dictation using Azure Speech-to-Text and Azure OpenAI.
 
@@ -16,7 +16,7 @@ A Windows desktop app for voice-to-text dictation using Azure Speech-to-Text and
 
 1. **Azure App Registration** (Entra ID)
    - Go to Azure Portal > Microsoft Entra ID > App registrations > New registration
-   - Name: "My Whisper" (or any name)
+   - Name: "Fluent" (or any name)
    - Supported account types: Single tenant (or as needed)
    - Redirect URI: Leave blank for now
    - After creation:

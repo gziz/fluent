@@ -1,5 +1,5 @@
-appId: com.mywhisper.app
-productName: My Whisper
+appId: com.fluent.app
+productName: Fluent
 copyright: Copyright 2024
 
 directories:
@@ -21,7 +21,7 @@ mac:
   entitlements: assets/entitlements.mac.plist
   entitlementsInherit: assets/entitlements.mac.plist
   extendInfo:
-    NSMicrophoneUsageDescription: "My Whisper needs microphone access for speech-to-text dictation."
+    NSMicrophoneUsageDescription: "Fluent needs microphone access for speech-to-text dictation."
 
 win:
   target:

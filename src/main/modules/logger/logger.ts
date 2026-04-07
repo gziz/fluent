@@ -28,7 +28,7 @@ class Logger {
 
     // Create log file with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    this.logPath = path.join(this.logsDir, `my-whisper-${timestamp}.log`);
+    this.logPath = path.join(this.logsDir, `fluent-${timestamp}.log`);
 
     this.initialized = true;
     this.log("[Logger]", "Initialized, writing to:", this.logPath);
@@ -109,7 +109,7 @@ class Logger {
   private cleanupOldLogs(): void {
     try {
       const files = fs.readdirSync(this.logsDir)
-        .filter(f => f.startsWith("my-whisper-") && f.endsWith(".log"))
+        .filter(f => f.startsWith("fluent-") && f.endsWith(".log"))
         .map(f => ({
           name: f,
           path: path.join(this.logsDir, f),

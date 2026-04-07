@@ -28,7 +28,7 @@ export class TrayManager {
     // In production, you'd use actual icon files
     const icon = this.createIcon(this.currentState);
     this.tray = new Tray(icon);
-    this.tray.setToolTip("My Whisper - Press Ctrl+Shift+Space to dictate");
+    this.tray.setToolTip("Fluent - Press Ctrl+Shift+Space to dictate");
     this.updateContextMenu();
   }
 
@@ -64,7 +64,7 @@ export class TrayManager {
   private updateTooltip(): void {
     if (!this.tray) return;
 
-    let tooltip = "My Whisper";
+    let tooltip = "Fluent";
     switch (this.currentState) {
       case "idle":
         tooltip += " - Press Ctrl+Shift+Space to dictate";

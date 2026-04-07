@@ -43,7 +43,7 @@ Users now configure the app via Settings (tray menu):
 ### Current State
 
 - The unpacked app builds successfully at `release/win-unpacked/`
-- Can run directly via `release/win-unpacked/My Whisper.exe`
+- Can run directly via `release/win-unpacked/Fluent.exe`
 - NSIS installer build fails due to Windows symlink permissions
 
 ### Issue
@@ -64,7 +64,7 @@ Electron-builder downloads `winCodeSign` tools which contain macOS symlinks. Win
 
 **Option 3: Distribute Unpacked Build**
 - Zip the `release/win-unpacked` folder
-- Users extract and run `My Whisper.exe` directly
+- Users extract and run `Fluent.exe` directly
 
 ### To Restore NSIS Installer
 

@@ -1,0 +1,28 @@
+{
+  "auth": {
+    "clientId": "",
+    "tenantId": ""
+  },
+  "speech": {
+    "subscriptionKey": "enc:djEweXeVeuqZ639Bd2qj3KkxAKhV5PAkoLj5RLJIXNhQlQulLMlRXrmyii6S0+2+zone",
+    "region": "eastus",
+    "language": "en-US"
+  },
+  "openai": {
+    "provider": "azure",
+    "apiKey": "enc:djEw7qi6IYbcI224jwrZlWOxkNs6InmqGnLW0SzkH3Hv9pUfvAQAKojH/YwBFkU8IQK0stKYY0jR1i9rHiGzhmWAhYaxZXAXglAbwDnjK0mxsuUlUkg4NRychkpnJmTSUmqs",
+    "baseUrl": "http://localhost:8001/v1",
+    "model": "Qwen/Qwen3-1.7B",
+    "endpoint": "https://ge271-m9owpwxv-eastus2.cognitiveservices.azure.com/",
+    "deploymentName": "gpt-4.1-mini-2"
+  },
+  "hotkey": {
+    "accelerator": "Shift+Command+Space"
+  },
+  "preferences": {
+    "playAudioFeedback": true,
+    "startAtLogin": false,
+    "pasteMode": "paste",
+    "enableOpenAICleanup": true
+  }
+}

@@ -1,6 +1,6 @@
 # Fluent
 
-A MAC/Windows desktop app for voice-to-text dictation using Azure Speech-to-Text and Azure OpenAI.
+A Mac/Windows desktop app for voice-to-text dictation using Azure Speech-to-Text and Azure OpenAI.
 
 ## Features
 

@@ -15,7 +15,7 @@ export interface SpeechConfig {
   resourceId?: string;
 }
 
-export type OpenAIProvider = "azure" | "openai";
+export type OpenAIProvider = "azure" | "openai" | "vllm" | "cerebras" | "groq";
 
 export interface OpenAIConfig {
   provider: OpenAIProvider;

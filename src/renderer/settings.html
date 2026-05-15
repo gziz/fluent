@@ -416,9 +416,12 @@
           <select id="openaiProvider" onchange="toggleOpenAIFields()">
             <option value="openai">OpenAI</option>
             <option value="azure">Azure OpenAI</option>
+            <option value="cerebras">Cerebras</option>
+            <option value="groq">Groq</option>
+            <option value="vllm">vLLM (Local)</option>
           </select>
         </div>
-        <div class="field-row">
+        <div class="field-row" id="apiKeyRow">
           <label class="field-label" for="openaiKey">API Key</label>
           <input type="password" id="openaiKey" placeholder="Enter your API key">
           <div id="openaiKeyHelp" class="field-hint">OpenAI platform &#x2192; API Keys</div>
@@ -445,6 +448,32 @@
             <label class="field-label" for="deploymentName">Deployment Name</label>
             <input type="text" id="deploymentName" placeholder="gpt-4.1-nano">
             <div class="field-hint">The name of your deployed model</div>
+          </div>
+        </div>
+        <div id="cerebras-fields" style="display: none;">
+          <div class="field-row">
+            <label class="field-label" for="cerebrasModel">Model</label>
+            <input type="text" id="cerebrasModel" placeholder="qwen-3-32b">
+            <div class="field-hint">e.g., qwen-3-32b, llama-4-scout-17b-16e, llama3.1-8b</div>
+          </div>
+        </div>
+        <div id="groq-fields" style="display: none;">
+          <div class="field-row">
+            <label class="field-label" for="groqModel">Model</label>
+            <input type="text" id="groqModel" placeholder="llama-3.3-70b-versatile">
+            <div class="field-hint">e.g., llama-3.3-70b-versatile, gemma2-9b-it, mistral-saba-24b</div>
+          </div>
+        </div>
+        <div id="vllm-fields" style="display: none;">
+          <div class="field-row">
+            <label class="field-label" for="vllmBaseUrl">Base URL</label>
+            <input type="text" id="vllmBaseUrl" placeholder="http://localhost:8000/v1">
+            <div class="field-hint">vLLM server URL (e.g., http://localhost:8000/v1)</div>
+          </div>
+          <div class="field-row">
+            <label class="field-label" for="vllmModel">Model</label>
+            <input type="text" id="vllmModel" placeholder="fluent">
+            <div class="field-hint">Model name served by vLLM</div>
           </div>
         </div>
       </div>
@@ -533,6 +562,10 @@
         document.getElementById('openaiBaseUrl').value = config.openai.baseUrl || 'https://api.openai.com/v1';
         document.getElementById('endpoint').value = config.openai.endpoint || '';
         document.getElementById('deploymentName').value = config.openai.deploymentName || '';
+        document.getElementById('cerebrasModel').value = config.openai.model || 'qwen-3-32b';
+        document.getElementById('groqModel').value = config.openai.model || 'llama-3.3-70b-versatile';
+        document.getElementById('vllmBaseUrl').value = config.openai.baseUrl || 'http://localhost:8000/v1';
+        document.getElementById('vllmModel').value = config.openai.model || 'fluent';
         toggleOpenAIFields();
         document.getElementById('accelerator').value = config.hotkey.accelerator || 'Ctrl+Shift+Space';
         updateHotkeyDisplay();
@@ -559,7 +592,9 @@
       const endpoint = document.getElementById('endpoint').value.trim();
       const openaiConfigured = openaiProvider === 'azure'
         ? (openaiKey && endpoint)
-        : openaiKey;
+        : openaiProvider === 'vllm'
+        ? true
+        : openaiKey;  // covers openai and cerebras
       const isConfigured = speechKey && region && openaiConfigured;
       if (isConfigured) {
         dot.className = 'config-dot ok';
@@ -569,7 +604,7 @@
         const missing = [];
         if (!speechKey) missing.push('Speech API key');
         if (!region) missing.push('Region');
-        if (!openaiKey) missing.push('OpenAI API key');
+        if (openaiProvider !== 'vllm' && !openaiKey) missing.push('OpenAI API key');
         if (openaiProvider === 'azure' && !endpoint) missing.push('Azure Endpoint');
         text.textContent = 'Missing: ' + missing.join(', ');
       }
@@ -583,14 +618,28 @@
           region: document.getElementById('region').value.trim() || 'eastus',
           language: document.getElementById('language').value.trim() || 'en-US',
         });
-        await window.api.config.set('openai', {
-          provider: document.getElementById('openaiProvider').value,
-          apiKey: document.getElementById('openaiKey').value.trim(),
-          baseUrl: document.getElementById('openaiBaseUrl').value.trim() || 'https://api.openai.com/v1',
-          model: document.getElementById('openaiModel').value.trim() || 'gpt-4.1-nano',
-          endpoint: document.getElementById('endpoint').value.trim(),
-          deploymentName: document.getElementById('deploymentName').value.trim(),
-        });
+        const provider = document.getElementById('openaiProvider').value;
+        const openaiConfig = { provider };
+        if (provider === 'vllm') {
+          openaiConfig.apiKey = '';
+          openaiConfig.baseUrl = document.getElementById('vllmBaseUrl').value.trim() || 'http://localhost:8000/v1';
+          openaiConfig.model = document.getElementById('vllmModel').value.trim() || 'fluent';
+        } else if (provider === 'cerebras') {
+          openaiConfig.apiKey = document.getElementById('openaiKey').value.trim();
+          openaiConfig.model = document.getElementById('cerebrasModel').value.trim() || 'qwen-3-32b';
+        } else if (provider === 'groq') {
+          openaiConfig.apiKey = document.getElementById('openaiKey').value.trim();
+          openaiConfig.model = document.getElementById('groqModel').value.trim() || 'llama-3.3-70b-versatile';
+        } else if (provider === 'azure') {
+          openaiConfig.apiKey = document.getElementById('openaiKey').value.trim();
+          openaiConfig.endpoint = document.getElementById('endpoint').value.trim();
+          openaiConfig.deploymentName = document.getElementById('deploymentName').value.trim();
+        } else {
+          openaiConfig.apiKey = document.getElementById('openaiKey').value.trim();
+          openaiConfig.baseUrl = document.getElementById('openaiBaseUrl').value.trim() || 'https://api.openai.com/v1';
+          openaiConfig.model = document.getElementById('openaiModel').value.trim() || 'gpt-4.1-nano';
+        }
+        await window.api.config.set('openai', openaiConfig);
         await window.api.config.set('hotkey', {
           accelerator: document.getElementById('accelerator').value.trim() || 'Ctrl+Shift+Space',
         });
@@ -632,14 +681,31 @@
       const provider = document.getElementById('openaiProvider').value;
       const openaiFields = document.getElementById('openai-fields');
       const azureFields = document.getElementById('azure-fields');
+      const cerebrasFields = document.getElementById('cerebras-fields');
+      const groqFields = document.getElementById('groq-fields');
+      const vllmFields = document.getElementById('vllm-fields');
+      const apiKeyRow = document.getElementById('apiKeyRow');
       const keyHelp = document.getElementById('openaiKeyHelp');
+      openaiFields.style.display = 'none';
+      azureFields.style.display = 'none';
+      cerebrasFields.style.display = 'none';
+      groqFields.style.display = 'none';
+      vllmFields.style.display = 'none';
+      apiKeyRow.style.display = 'flex';
       if (provider === 'azure') {
-        openaiFields.style.display = 'none';
         azureFields.style.display = 'block';
         keyHelp.textContent = 'Azure Portal \u2192 OpenAI resource \u2192 Keys and Endpoint';
+      } else if (provider === 'cerebras') {
+        cerebrasFields.style.display = 'block';
+        keyHelp.textContent = 'Cerebras Cloud \u2192 API Keys';
+      } else if (provider === 'groq') {
+        groqFields.style.display = 'block';
+        keyHelp.textContent = 'Groq Console \u2192 API Keys';
+      } else if (provider === 'vllm') {
+        vllmFields.style.display = 'block';
+        apiKeyRow.style.display = 'none';
       } else {
         openaiFields.style.display = 'block';
-        azureFields.style.display = 'none';
         keyHelp.textContent = 'OpenAI platform \u2192 API Keys';
       }
       updateConfigStatus();

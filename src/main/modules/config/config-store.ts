@@ -189,12 +189,16 @@ export class ConfigStore {
 
   isConfigured(): boolean {
     // Check that API keys and endpoints are configured
-    return !!(
-      this.config.speech.subscriptionKey &&
-      this.config.speech.region &&
-      this.config.openai.endpoint &&
-      this.config.openai.apiKey
-    );
+    const speechConfigured = !!(this.config.speech.subscriptionKey && this.config.speech.region);
+    let openaiConfigured = false;
+    if (this.config.openai.provider === "vllm") {
+      openaiConfigured = true;
+    } else if (this.config.openai.provider === "azure") {
+      openaiConfigured = !!(this.config.openai.apiKey && this.config.openai.endpoint);
+    } else {
+      openaiConfigured = !!this.config.openai.apiKey;
+    }
+    return speechConfigured && openaiConfigured;
   }
 
   /**

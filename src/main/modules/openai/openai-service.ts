@@ -54,7 +54,7 @@ export class OpenAIService {
       return "";
     }
 
-    if (!this.config.apiKey) {
+    if (this.config.provider !== "vllm" && !this.config.apiKey) {
       throw new Error("OpenAI service not configured: apiKey is required");
     }
 
@@ -69,12 +69,21 @@ export class OpenAIService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        const provider = this.config.provider === "azure" ? "Azure OpenAI" : "OpenAI";
+        const providerLabels: Record<string, string> = {
+          azure: "Azure OpenAI",
+          openai: "OpenAI",
+          vllm: "vLLM",
+          cerebras: "Cerebras",
+          groq: "Groq",
+        };
+        const provider = providerLabels[this.config.provider] || this.config.provider;
         throw new Error(`${provider} API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      const cleanedText = data.choices?.[0]?.message?.content?.trim();
+      const cleanedText = this.config.provider === "vllm"
+        ? data.choices?.[0]?.text?.trim()
+        : data.choices?.[0]?.message?.content?.trim();
 
       return cleanedText || transcript;
     } catch (error) {
@@ -97,7 +106,22 @@ export class OpenAIService {
       { role: "user", content: transcript },
     ];
 
-    if (this.config.provider === "azure") {
+    if (this.config.provider === "vllm") {
+      const model = this.config.model || "fluent";
+      const baseUrl = (this.config.baseUrl || "http://localhost:8001/v1").replace(/\/+$/, "");
+      return {
+        url: `${baseUrl}/completions`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: {
+          model,
+          prompt: `<|transcription|>\n${transcript}\n<|cleaned|>\n`,
+          max_tokens: 100,
+          temperature: 0,
+        },
+      };
+    } else if (this.config.provider === "azure") {
       if (!this.config.endpoint || !this.config.deploymentName) {
         throw new Error("Azure OpenAI requires endpoint and deploymentName");
       }
@@ -108,6 +132,32 @@ export class OpenAIService {
           "api-key": this.config.apiKey,
         },
         body: {
+          messages,
+        },
+      };
+    } else if (this.config.provider === "cerebras") {
+      const model = this.config.model || "qwen-3-32b";
+      return {
+        url: "https://api.cerebras.ai/v1/chat/completions",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.config.apiKey}`,
+        },
+        body: {
+          model,
+          messages,
+        },
+      };
+    } else if (this.config.provider === "groq") {
+      const model = this.config.model || "llama-3.3-70b-versatile";
+      return {
+        url: "https://api.groq.com/openai/v1/chat/completions",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.config.apiKey}`,
+        },
+        body: {
+          model,
           messages,
         },
       };
